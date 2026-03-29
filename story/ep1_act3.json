@@ -1,0 +1,47 @@
+{
+  "episode": 1,
+  "act": 3,
+  "title": "Der Höhepunkt",
+  "chapters": [
+    {
+      "chapter": 8,
+      "title": "Das Herz des Waldes",
+      "setting": "The Heiliger Hain — the sacred grove. Ancient trees form a cathedral of bark and shadow.",
+      "plot_beat": "Final confrontation with the Schattengeist. Mixed challenge set drawing on all prior learning.",
+      "language_focus": "Mixed — all prior structures",
+      "cefr_target": "B2",
+      "challenges": [],
+      "completion_xp": 250,
+      "unlocks_chapter": 9
+    },
+    {
+      "chapter": 9,
+      "title": "Die Wahl",
+      "setting": "The heart of the grove. The shadow dissolves to reveal the wounded Waldwächter.",
+      "plot_beat": "Player chooses: Rache (destroy the spirit) or Vergebung (release and heal it). Both end Episode I.",
+      "language_focus": "Free response — player writes their choice and reasoning in German",
+      "cefr_target": "B2",
+      "choices": [
+        {
+          "id": "rache",
+          "label": "Rache — Zerstöre den Geist",
+          "consequence": "The curse ends. The forest loses its guardian. Episode II opens in a darker world.",
+          "episode_2_flag": "world_darkened"
+        },
+        {
+          "id": "vergebung",
+          "label": "Vergebung — Befreie den Geist",
+          "consequence": "The Waldwächter is reborn. The forest heals. Episode II opens with Brunhilde as an active ally.",
+          "episode_2_flag": "brunhilde_ally"
+        }
+      ],
+      "completion_xp": 500,
+      "unlocks_chapter": null
+    }
+  ],
+  "epilogue": {
+    "title": "Die Auflösung",
+    "summary_prompt": "Generate a personalised epilogue for {player_name} referencing their ending choice ({ending}) and final stats.",
+    "episode_2_teaser": "Die Gilde ruft dich. Eine neue Zeitlinie beginnt."
+  }
+}

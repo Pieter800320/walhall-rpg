@@ -1,0 +1,46 @@
+{
+  "npcs": [
+    {
+      "id": "dorfaelteste",
+      "name": "Die Dorfälteste",
+      "role": "Village elder. Suspicious but fair.",
+      "speech_style": "Short, direct sentences. Present tense. A1 vocabulary.",
+      "acts": [1]
+    },
+    {
+      "id": "brunhilde",
+      "name": "Brunhilde",
+      "role": "Forest seer. Ancient wisdom. Provides mana-powered hints.",
+      "speech_style": "Riddles and questions. Modal verbs. Poetic phrasing.",
+      "acts": [1, 2, 3]
+    },
+    {
+      "id": "zwergenkoenig",
+      "name": "Der Zwergenkönig",
+      "role": "King of the mountain dwarves. Formal, demanding.",
+      "speech_style": "Formal register (Sie). Dativ case. Numbers and trades.",
+      "acts": [2]
+    },
+    {
+      "id": "nixe",
+      "name": "Die Nixe",
+      "role": "Water spirit. Speaks only in questions.",
+      "speech_style": "Questions only. Complex sentence structures. Konjunktiv II.",
+      "acts": [2]
+    },
+    {
+      "id": "walkyrie",
+      "name": "Die Walküre",
+      "role": "Disguised warrior ally. Appears in Act II.",
+      "speech_style": "Imperatives. Military precision. Short commands.",
+      "acts": [2, 3]
+    },
+    {
+      "id": "wotan",
+      "name": "Wotan",
+      "role": "The god. Appears briefly at the end of the epilogue.",
+      "speech_style": "Ancient, commanding. Archaic German phrasing.",
+      "acts": [3]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "episode": 1,
+  "act": 1,
+  "title": "Die Ankunft",
+  "chapters": [
+    {
+      "chapter": 1,
+      "title": "Das Dorf am Rhein",
+      "setting": "The village of Nebelhain at dusk. Smoke rises from thatched roofs. Villagers watch the stranger arrive with wary eyes.",
+      "plot_beat": "Player arrives in Nebelhain. Must speak to 3 villagers to earn their trust.",
+      "language_focus": "Greetings, introductions, present tense verbs",
+      "cefr_target": "A1",
+      "challenges": [
+        {
+          "id": "c1_q1",
+          "type": "dialogantwort",
+          "npc": "Dorfälteste",
+          "prompt_de": "Wer bist du, Fremder?",
+          "prompt_en": "An old woman blocks your path. She asks: 'Who are you, stranger?' — answer her in German.",
+          "example_answer": "Ich bin [name]. Ich komme aus dem Norden.",
+          "grammar_focus": "verb sein (to be), first person present",
+          "xp_reward": 10,
+          "item_reward": null
+        },
+        {
+          "id": "c1_q2",
+          "type": "übersetzung",
+          "prompt_en": "Translate: 'I am looking for help.'",
+          "correct_de": "Ich suche Hilfe.",
+          "grammar_focus": "present tense, accusative object",
+          "xp_reward": 10,
+          "item_reward": null
+        },
+        {
+          "id": "c1_q3",
+          "type": "dialogantwort",
+          "npc": "Kind",
+          "prompt_de": "Kannst du uns helfen?",
+          "prompt_en": "A child runs up to you and asks: 'Can you help us?' — answer in German.",
+          "example_answer": "Ja, ich kann helfen. Was ist passiert?",
+          "grammar_focus": "modal verb können, first person",
+          "xp_reward": 15,
+          "item_reward": "Schwert"
+        }
+      ],
+      "completion_xp": 50,
+      "unlocks_chapter": 2
+    },
+    {
+      "chapter": 2,
+      "title": "Der erste Schatten",
+      "setting": "The edge of the Nebelwald at night. The shadow moves between the trees. A dying oak bears carved runes.",
+      "plot_beat": "Player tracks the shadow, finds runes connected to their family. First combat encounter.",
+      "language_focus": "Past tense (Perfekt), describing locations",
+      "cefr_target": "A1",
+      "challenges": [],
+      "completion_xp": 75,
+      "unlocks_chapter": 3
+    },
+    {
+      "chapter": 3,
+      "title": "Die Waldseherin",
+      "setting": "A hidden clearing deep in the forest. Brunhilde sits before a fire that burns without wood.",
+      "plot_beat": "Player meets Brunhilde. She speaks in riddles and reveals the nature of the curse.",
+      "language_focus": "Modal verbs (müssen, können, dürfen), forming questions",
+      "cefr_target": "A2",
+      "challenges": [],
+      "completion_xp": 100,
+      "unlocks_chapter": 4
+    }
+  ]
+}

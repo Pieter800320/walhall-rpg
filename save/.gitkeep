@@ -1,0 +1,2 @@
+# Save files (save_state.json and mistakes.json) are excluded by .gitignore.
+# This file keeps the save/ folder tracked so the directory exists on clone.

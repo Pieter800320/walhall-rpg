@@ -1,0 +1,51 @@
+{
+  "episode": 1,
+  "act": 2,
+  "title": "Die Suche",
+  "chapters": [
+    {
+      "chapter": 4,
+      "title": "Die Wilde Jagd",
+      "setting": "The deep forest at midnight. The sound of hooves and horns fills the air.",
+      "plot_beat": "The Wild Hunt rides. Player must evade Wotan's hunters using correct German.",
+      "language_focus": "Imperatives, accusative case",
+      "cefr_target": "A2",
+      "challenges": [],
+      "completion_xp": 120,
+      "unlocks_chapter": 5
+    },
+    {
+      "chapter": 5,
+      "title": "Das Zwergengold",
+      "setting": "The roots of the Hartenberg mountain. A forge lit by volcanic light.",
+      "plot_beat": "Player must negotiate with the Zwergenkönig in formal German to learn about the curse.",
+      "language_focus": "Formal register (Sie), Dativ case, numbers",
+      "cefr_target": "B1",
+      "challenges": [],
+      "completion_xp": 150,
+      "unlocks_chapter": 6
+    },
+    {
+      "chapter": 6,
+      "title": "Das Nixenrätsel",
+      "setting": "The banks of the Rheinsee. Mist rises from still, black water.",
+      "plot_beat": "The Nixe holds the truth about your family. She speaks only in questions.",
+      "language_focus": "Konjunktiv II, complex sentence structures",
+      "cefr_target": "B1",
+      "challenges": [],
+      "completion_xp": 175,
+      "unlocks_chapter": 7
+    },
+    {
+      "chapter": 7,
+      "title": "Der Verrat",
+      "setting": "The village square of Nebelhain. The whole village has gathered.",
+      "plot_beat": "The Bürgermeister reveals himself as the shadow's collaborator. Player must win a public debate.",
+      "language_focus": "Argumentative connectives (weil, obwohl, deshalb)",
+      "cefr_target": "B2",
+      "challenges": [],
+      "completion_xp": 200,
+      "unlocks_chapter": 8
+    }
+  ]
+}

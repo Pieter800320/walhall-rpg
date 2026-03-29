@@ -1,0 +1,43 @@
+"""
+ai/evaluator.py
+================
+Uses Claude Haiku to evaluate player answers quickly and cheaply.
+Returns a structured result the game engine can act on immediately.
+"""
+
+import os
+import json
+import anthropic
+from ai.prompts import evaluator_prompt, hint_prompt
+from engine.srs_engine import build_srs_context
+
+client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+HAIKU_MODEL = "claude-haiku-4-5-20251001"
+
+
+def evaluate_answer(player_name: str, challenge: str, player_answer: str) -> dict:
+    """
+    Send answer to Haiku for evaluation.
+    Returns: { correct: bool, explanation: str, grammar_focus: str }
+    """
+    srs = build_srs_context()
+    prompt = evaluator_prompt(player_name, challenge, player_answer, srs)
+
+    # TODO: call client.messages.create with HAIKU_MODEL
+    # Parse JSON response and return dict
+    # Handle JSON parse errors gracefully
+    pass
+
+
+def get_hint(player_name: str, challenge: str) -> str:
+    """
+    Get a grammar hint from Haiku without revealing the answer.
+    Returns hint text as a plain string.
+    """
+    srs = build_srs_context()
+    prompt = hint_prompt(player_name, challenge, srs)
+
+    # TODO: call client.messages.create with HAIKU_MODEL
+    # Return response text
+    pass
