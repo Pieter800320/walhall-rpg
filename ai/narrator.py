@@ -20,15 +20,21 @@ SONNET_MODEL = "claude-sonnet-4-6"
 def narrate_chapter(player_name: str, chapter_data: dict) -> str:
     """
     Generate immersive chapter opening text using Sonnet.
-    Called once per chapter transition (mana not required — it's story progression).
+    Called once per chapter transition (mana not required — story progression).
     Returns narration as a plain string.
     """
     srs = build_srs_context()
     prompt = narrator_prompt(player_name, chapter_data, srs)
 
-    # TODO: call client.messages.create with SONNET_MODEL
-    # Return response text
-    pass
+    try:
+        response = client.messages.create(
+            model=SONNET_MODEL,
+            max_tokens=400,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.content[0].text.strip()
+    except Exception as e:
+        return f"[Narration unavailable: {str(e)}]"
 
 
 def explain_grammar(player_name: str, grammar_focus: str, example_sentence: str) -> str:
@@ -39,6 +45,12 @@ def explain_grammar(player_name: str, grammar_focus: str, example_sentence: str)
     """
     prompt = explanation_prompt(player_name, grammar_focus, example_sentence)
 
-    # TODO: call client.messages.create with SONNET_MODEL
-    # Return response text
-    pass
+    try:
+        response = client.messages.create(
+            model=SONNET_MODEL,
+            max_tokens=500,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.content[0].text.strip()
+    except Exception as e:
+        return f"Brunhilde schweigt. ({str(e)})"
