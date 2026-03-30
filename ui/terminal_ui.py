@@ -22,7 +22,8 @@ from engine.mana_engine import spend_mana, can_afford, regen_mana
 from engine.item_engine import get_active_multiplier
 from engine.srs_engine import log_mistake, log_correct
 from ai.evaluator import evaluate_answer, get_hint
-from ai.narrator import narrate_chapter, explain_grammar, narrate_epilogue
+from ai.narrator import narrate_chapter, explain_grammar, narrate_epilogue, generate_diary_entry, evaluate_leseverstehen
+from engine.diary import get_entry, store_entry, get_all_entries_text
 
 console = Console()
 
@@ -219,15 +220,34 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
                 time.sleep(1)
             continue
 
+        if inp == "/diary":
+            entries = get_all_entries_text(state.episode)
+            console.print()
+            console.print(Panel(
+                entries,
+                title="[bold yellow]📖 Grimnirs Tagebuch[/]",
+                border_style=GOLD, padding=(1, 2)
+            ))
+            Prompt.ask("  [Weiter — Enter drücken]")
+            continue
+
         if not inp:
             continue
 
-        # ── Evaluate answer ──
-        elapsed  = time.time() - start_time
-        fast     = elapsed < 20.0
+        # ── Leseverstehen challenge type ──────────────────────────
+        challenge_type = challenge.get("type", "")
+        if challenge_type == "leseverstehen":
+            diary_entry = challenge.get("_diary_entry", "")
+            question    = challenge.get("leseverstehen_question", "")
+            console.print("  [grey50]Brunhilde bewertet deine Antwort...[/]")
+            result = evaluate_leseverstehen(
+                state.player_name, diary_entry, question, inp, state.cefr_preference
+            )
+        else:
+            # ── Standard evaluate ─────────────────────────────────
+            console.print("  [grey50]Brunhilde bewertet deine Antwort...[/]")
+            result = evaluate_answer(state.player_name, prompt_text, inp, state.cefr_preference)
 
-        console.print("  [grey50]Brunhilde bewertet deine Antwort...[/]")
-        result = evaluate_answer(state.player_name, prompt_text, inp, state.cefr_preference)
         last_result = result
 
         # Update accuracy stats
@@ -348,8 +368,18 @@ def run_chapter(state: GameState, chapter_data: dict) -> None:
     console.print(Panel(narration, border_style=BLUE, padding=(1, 2)))
     Prompt.ask("\n  [Weiter — Enter drücken]")
 
-    # Challenges
+    # Generate diary entry for this chapter (cached after first run)
+    ch_num = chapter_data.get("chapter", 0)
+    diary_entry = get_entry(state.episode, state.act, ch_num)
+    if diary_entry is None:
+        diary_entry = generate_diary_entry(state.player_name, chapter_data, state.cefr_preference)
+        store_entry(state.episode, state.act, ch_num, diary_entry)
+
+    # Inject diary entry into any leseverstehen challenges
     challenges = chapter_data.get("challenges", [])
+    for ch in challenges:
+        if ch.get("type") == "leseverstehen":
+            ch["_diary_entry"] = diary_entry
     for i, challenge in enumerate(challenges):
         correct = run_challenge(state, challenge)
         if correct:

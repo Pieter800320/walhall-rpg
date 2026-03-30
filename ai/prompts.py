@@ -79,6 +79,54 @@ Give ONE helpful hint about the grammar or vocabulary needed.
 Do NOT give the answer directly. Max 2 sentences. Write in English."""
 
 
+def diary_entry_prompt(player_name: str, chapter_data: dict, cefr: str = "B2") -> str:
+    """
+    Sonnet prompt: generate a first-person diary entry for the current chapter.
+    Written as Grimnir reflecting on what just happened.
+    """
+    level_note = f"Write the German portions at {cefr} level ({CEFR_DESCRIPTIONS.get(cefr, '')})."
+    return f"""You are writing a diary entry for {player_name}, a warrior in a dark Germanic RPG.
+{level_note}
+
+The entry is written in first person, as {player_name} reflecting on the events of:
+Chapter: {chapter_data.get('title', '')}
+What happened: {chapter_data.get('plot_beat', '')}
+Setting: {chapter_data.get('setting', '')}
+
+Write a short diary entry (4-6 sentences) that:
+- Starts with a date-like header in this format: "Tag {chapter_data.get('chapter', 1)} — {chapter_data.get('title', '')}"
+- Is written mostly in English but weaves in German words and phrases naturally
+- Captures the emotional tone — fear, determination, wonder, or dread as appropriate
+- Ends with one sentence of reflection or resolve
+- Uses NO markdown formatting — plain text only
+- Feels personal, like a real warrior's field journal"""
+
+
+def leseverstehen_prompt(player_name: str, diary_entry: str,
+                          question: str, player_answer: str, cefr: str = "B2") -> str:
+    """
+    Haiku prompt: evaluate a reading comprehension answer about a diary entry.
+    Returns JSON: { correct: bool, explanation: str }
+    """
+    return f"""You are evaluating a German reading comprehension exercise in a fantasy RPG.
+The player is {player_name} at {cefr} level.
+
+Diary entry they read:
+{diary_entry}
+
+Comprehension question: {question}
+Player's answer: {player_answer}
+
+Evaluate whether the answer correctly addresses the question based on the diary entry.
+Accept answers in German or English. Be lenient with phrasing — focus on comprehension, not grammar.
+Respond ONLY in valid JSON:
+{{
+  "correct": true or false,
+  "explanation": "brief feedback in English, max 2 sentences",
+  "grammar_focus": "reading comprehension"
+}}"""
+
+
 def epilogue_prompt(player_name: str, ending: str, stats: dict) -> str:
     """
     Sonnet prompt: generate a personalised episode epilogue.

@@ -90,6 +90,15 @@
           "correct_de": "Ich habe den Schatten heute Nacht gesehen.",
           "grammar_focus": "Perfekt word order, accusative definite article",
           "xp_reward": 20,
+          "item_reward": null
+        },
+        {
+          "id": "c2_q5",
+          "type": "leseverstehen",
+          "prompt_en": "Your diary entry for today appears above. Read it carefully, then answer in German: What did you find at the edge of the forest?",
+          "leseverstehen_question": "What did the player find at the edge of the Nebelwald, according to their diary entry?",
+          "grammar_focus": "reading comprehension",
+          "xp_reward": 20,
           "item_reward": "Runenstein"
         }
       ],
