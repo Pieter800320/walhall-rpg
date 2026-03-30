@@ -6,19 +6,32 @@ Player name and SRS context are injected at call time.
 """
 
 
-def evaluator_prompt(player_name: str, challenge: str, player_answer: str, srs_context: str = "") -> str:
+CEFR_DESCRIPTIONS = {
+    "A1": "absolute beginner — simple present tense, basic vocabulary, very short sentences",
+    "A2": "elementary — past tense, common phrases, simple questions and answers",
+    "B1": "intermediate — modal verbs, subordinate clauses, can express opinions",
+    "B2": "upper-intermediate — complex grammar, nuanced expression, argumentative structures",
+    "C1": "advanced — near-native fluency, idiomatic language, complex discourse",
+}
+
+
+def evaluator_prompt(player_name: str, challenge: str, player_answer: str,
+                     srs_context: str = "", cefr: str = "B2") -> str:
     """
     Haiku prompt: evaluate a player's German answer.
     Returns JSON: { correct: bool, explanation: str, grammar_focus: str }
     """
+    level_note = f"The player's self-reported German level is {cefr} ({CEFR_DESCRIPTIONS.get(cefr, '')})."
     return f"""You are a strict but encouraging German language evaluator in a fantasy RPG.
-The player's name is {player_name}.
+The player's name is {player_name}. {level_note}
 {srs_context}
 
 Challenge: {challenge}
 Player's answer: {player_answer}
 
 Evaluate whether the answer is grammatically correct and contextually appropriate.
+Calibrate your explanation to a {cefr} learner — don't over-explain basics to advanced players,
+and don't assume knowledge of complex grammar for beginners.
 Respond ONLY in valid JSON with no extra text:
 {{
   "correct": true or false,
@@ -27,13 +40,15 @@ Respond ONLY in valid JSON with no extra text:
 }}"""
 
 
-def narrator_prompt(player_name: str, chapter_data: dict, srs_context: str = "") -> str:
+def narrator_prompt(player_name: str, chapter_data: dict,
+                    srs_context: str = "", cefr: str = "B2") -> str:
     """
     Sonnet prompt: generate an immersive chapter opening narrative.
-    chapter_data: loaded from story JSON.
     """
+    level_note = f"Calibrate all German vocabulary and phrases to {cefr} level ({CEFR_DESCRIPTIONS.get(cefr, '')})."
     return f"""You are the narrator of a dark Germanic mythology RPG.
 The protagonist's name is {player_name}.
+{level_note}
 {srs_context}
 
 Chapter: {chapter_data.get('title', '')}
@@ -43,15 +58,19 @@ Language focus: {chapter_data.get('language_focus', '')}
 
 Write a vivid, immersive opening paragraph (3-5 sentences) in English with occasional
 German words or phrases woven in naturally (always followed by a brief contextual clue).
+At {cefr} level: {"use only simple, common German words" if cefr in ("A1","A2") else "use rich vocabulary and idiomatic phrases appropriate to the level"}.
 Address the protagonist as {player_name}. Avoid modern language. Maintain a dark, mythological tone.
 Do NOT use any markdown formatting — no **, no *, no #, no ---, no > characters. Plain text only."""
 
 
-def hint_prompt(player_name: str, challenge: str, srs_context: str = "") -> str:
+def hint_prompt(player_name: str, challenge: str,
+                srs_context: str = "", cefr: str = "B2") -> str:
     """
     Haiku prompt: provide a grammar hint without giving away the answer.
     """
+    level_note = f"The player is at {cefr} level. Pitch your hint accordingly."
     return f"""You are a helpful German tutor in a fantasy RPG. The player is {player_name}.
+{level_note}
 {srs_context}
 
 Challenge: {challenge}

@@ -70,14 +70,40 @@ def render_command_bar() -> None:
     console.print(
         "  [magenta]/hint[/] ·10  [magenta]/translate[/] ·15  "
         "[magenta]/erkläre[/] ·20  [magenta]/wiederholen[/] ·5  "
-        "[magenta]/quit[/]",
+        "[magenta]/level[/]  [magenta]/quit[/]",
         style=GREY
     )
 
 
 # ── Name screen ───────────────────────────────────────────────────
 
-def show_name_screen() -> str:
+CEFR_OPTIONS = {
+    "1": ("A1", "Absolute beginner — simple present tense, basic words"),
+    "2": ("A2", "Elementary — past tense, common phrases"),
+    "3": ("B1", "Intermediate — modal verbs, opinions, longer sentences"),
+    "4": ("B2", "Upper-intermediate — complex grammar, arguments"),
+    "5": ("C1", "Advanced — near-native, idiomatic, complex discourse"),
+}
+
+
+def show_level_screen(current: str = None) -> str:
+    """Display CEFR level selection. Returns chosen level string e.g. 'B2'."""
+    console.print()
+    console.print(Rule(title="[bold yellow]Sprachniveau wählen[/]", style=GOLD))
+    console.print()
+    if current:
+        console.print(f"  Aktuelles Niveau: [bold cyan]{current}[/]", style=GREY)
+        console.print()
+    for key, (level, desc) in CEFR_OPTIONS.items():
+        console.print(f"  [bold yellow]{key}[/]  {level} — {desc}", style=GREY)
+    console.print()
+    choice = Prompt.ask("  Dein Niveau (1-5)", default="4")
+    level, _ = CEFR_OPTIONS.get(choice, ("B2", ""))
+    return level
+
+
+def show_name_screen() -> tuple:
+    """Styled first-launch name + level prompt. Returns (name, cefr)."""
     console.clear()
     console.print()
     console.print("  ╔══════════════════════════════════════════╗", style=GOLD)
@@ -88,7 +114,9 @@ def show_name_screen() -> str:
     console.print('  "Wie lautet dein Name, Krieger?"', style=f"italic {PURPLE}")
     console.print()
     name = Prompt.ask("  Dein Name")
-    return name.strip() or "Grimnir"
+    name = name.strip() or "Grimnir"
+    cefr = show_level_screen()
+    return name, cefr
 
 
 # ── Challenge loop ────────────────────────────────────────────────
@@ -140,6 +168,13 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
             console.print("  Auf Wiedersehen!", style=GREY)
             raise SystemExit
 
+        if inp == "/level":
+            state.cefr_preference = show_level_screen(state.cefr_preference)
+            save_state(state)
+            console.print(f"  [cyan]Niveau geändert zu {state.cefr_preference}.[/]")
+            time.sleep(1)
+            continue
+
         if inp == "/wiederholen":
             if spend_mana(state, "/wiederholen"):
                 last_result = None
@@ -153,7 +188,7 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
             if spend_mana(state, "/hint"):
                 console.print()
                 console.print("  [magenta]Brunhilde flüstert:[/]", style=PURPLE)
-                hint = get_hint(state.player_name, prompt_text)
+                hint = get_hint(state.player_name, prompt_text, state.cefr_preference)
                 console.print(Panel(hint, border_style=PURPLE, padding=(0, 2)))
                 Prompt.ask("  [Weiter — Enter drücken]")
             else:
@@ -192,7 +227,7 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
         fast     = elapsed < 20.0
 
         console.print("  [grey50]Brunhilde bewertet deine Antwort...[/]")
-        result = evaluate_answer(state.player_name, prompt_text, inp)
+        result = evaluate_answer(state.player_name, prompt_text, inp, state.cefr_preference)
         last_result = result
 
         # Update accuracy stats
@@ -308,7 +343,7 @@ def run_chapter(state: GameState, chapter_data: dict) -> None:
     console.print()
     console.print("  [grey50]Brunhilde bereitet die Geschichte vor...[/]")
 
-    narration = narrate_chapter(state.player_name, chapter_data)
+    narration = narrate_chapter(state.player_name, chapter_data, state.cefr_preference)
     console.print()
     console.print(Panel(narration, border_style=BLUE, padding=(1, 2)))
     Prompt.ask("\n  [Weiter — Enter drücken]")
@@ -368,7 +403,7 @@ def run_game(state: GameState) -> None:
 
     # First launch
     if not state.player_name:
-        state.player_name = show_name_screen()
+        state.player_name, state.cefr_preference = show_name_screen()
         save_state(state)
 
     # Daily streak

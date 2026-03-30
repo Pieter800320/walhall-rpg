@@ -41,7 +41,8 @@ class GameState(BaseModel):
     accuracy_total: int = 0             # cumulative correct answers
     accuracy_attempts: int = 0          # cumulative attempts
 
-    # Story position
+    # Language level preference (player-selected, switchable anytime)
+    cefr_preference: str = "B2"   # A1 | A2 | B1 | B2 | C1
     episode: int = 1
     act: int = 1
     chapter: int = 1
