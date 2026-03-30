@@ -32,7 +32,14 @@ def narrate_chapter(player_name: str, chapter_data: dict) -> str:
             max_tokens=400,
             messages=[{"role": "user", "content": prompt}],
         )
-        return response.content[0].text.strip()
+        import re
+text = response.content[0].text.strip()
+text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)  # remove bold
+text = re.sub(r'\*(.*?)\*', r'\1', text)        # remove italic
+text = re.sub(r'^#{1,3}\s.*$', '', text, flags=re.MULTILINE)  # remove headers
+text = re.sub(r'^---+$', '', text, flags=re.MULTILINE)         # remove dividers
+text = re.sub(r'\n{3,}', '\n\n', text).strip()  # clean blank lines
+return text
     except Exception as e:
         return f"[Narration unavailable: {str(e)}]"
 
