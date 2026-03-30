@@ -43,7 +43,8 @@ Language focus: {chapter_data.get('language_focus', '')}
 
 Write a vivid, immersive opening paragraph (3-5 sentences) in English with occasional
 German words or phrases woven in naturally (always followed by a brief contextual clue).
-Address the protagonist as {player_name}. Avoid modern language. Maintain a dark, mythological tone."""
+Address the protagonist as {player_name}. Avoid modern language. Maintain a dark, mythological tone.
+Do NOT use any markdown formatting — no **, no *, no #, no ---, no > characters. Plain text only."""
 
 
 def hint_prompt(player_name: str, challenge: str, srs_context: str = "") -> str:
