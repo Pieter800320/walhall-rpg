@@ -53,7 +53,46 @@
       "plot_beat": "Player tracks the shadow, finds runes connected to their family. First combat encounter.",
       "language_focus": "Past tense (Perfekt), describing locations",
       "cefr_target": "A1",
-      "challenges": [],
+      "challenges": [
+        {
+          "id": "c2_q1",
+          "type": "übersetzung",
+          "prompt_en": "Translate: 'I have gone into the forest.'",
+          "correct_de": "Ich bin in den Wald gegangen.",
+          "grammar_focus": "Perfekt tense with sein",
+          "xp_reward": 10,
+          "item_reward": null
+        },
+        {
+          "id": "c2_q2",
+          "type": "fehlerkorrektur",
+          "prompt_en": "Fix the sentence: 'Der Baum ist sehr alt und er hat viele Jahren gelebt.' — find and correct the error.",
+          "correct_de": "Der Baum ist sehr alt und er hat viele Jahre gelebt.",
+          "grammar_focus": "accusative case after haben",
+          "xp_reward": 15,
+          "item_reward": null
+        },
+        {
+          "id": "c2_q3",
+          "type": "dialogantwort",
+          "npc": "Schattengeist",
+          "prompt_de": "Der Schatten flüstert: 'Wo bist du hergekommen?'",
+          "prompt_en": "The shadow whispers from the trees: 'Where have you come from?' — answer in German using Perfekt tense.",
+          "example_answer": "Ich bin aus dem Norden gekommen.",
+          "grammar_focus": "Perfekt tense with sein, directional phrases",
+          "xp_reward": 15,
+          "item_reward": null
+        },
+        {
+          "id": "c2_q4",
+          "type": "satzbau",
+          "prompt_en": "Reconstruct this scrambled sentence: 'gesehen / habe / Schatten / Ich / den / heute Nacht'",
+          "correct_de": "Ich habe den Schatten heute Nacht gesehen.",
+          "grammar_focus": "Perfekt word order, accusative definite article",
+          "xp_reward": 20,
+          "item_reward": "Runenstein"
+        }
+      ],
       "completion_xp": 75,
       "unlocks_chapter": 3
     },
@@ -64,7 +103,48 @@
       "plot_beat": "Player meets Brunhilde. She speaks in riddles and reveals the nature of the curse.",
       "language_focus": "Modal verbs (müssen, können, dürfen), forming questions",
       "cefr_target": "A2",
-      "challenges": [],
+      "challenges": [
+        {
+          "id": "c3_q1",
+          "type": "dialogantwort",
+          "npc": "Brunhilde",
+          "prompt_de": "Brunhilde fragt: 'Was musst du hier finden?'",
+          "prompt_en": "Brunhilde stares into the fire and asks: 'What must you find here?' — answer in German using a modal verb.",
+          "example_answer": "Ich muss die Wahrheit über meinen Fluch finden.",
+          "grammar_focus": "modal verb müssen, accusative object",
+          "xp_reward": 15,
+          "item_reward": null
+        },
+        {
+          "id": "c3_q2",
+          "type": "übersetzung",
+          "prompt_en": "Translate: 'I cannot leave without help.'",
+          "correct_de": "Ich kann nicht ohne Hilfe gehen.",
+          "grammar_focus": "modal verb können, negation with nicht",
+          "xp_reward": 15,
+          "item_reward": null
+        },
+        {
+          "id": "c3_q3",
+          "type": "fehlerkorrektur",
+          "prompt_en": "Fix the sentence: 'Du darfst nicht die alten Götter vergessen werden.'",
+          "correct_de": "Du darfst die alten Götter nicht vergessen.",
+          "grammar_focus": "modal verb dürfen, infinitive without werden",
+          "xp_reward": 20,
+          "item_reward": null
+        },
+        {
+          "id": "c3_q4",
+          "type": "dialogantwort",
+          "npc": "Brunhilde",
+          "prompt_de": "Brunhilde flüstert: 'Kannst du dem Schatten allein widerstehen?'",
+          "prompt_en": "Brunhilde whispers: 'Can you resist the shadow alone?' — answer honestly in German, using können.",
+          "example_answer": "Ich kann dem Schatten nicht allein widerstehen. Ich brauche deine Hilfe.",
+          "grammar_focus": "modal verb können, dative object with widerstehen",
+          "xp_reward": 20,
+          "item_reward": "Stab"
+        }
+      ],
       "completion_xp": 100,
       "unlocks_chapter": 4
     }
