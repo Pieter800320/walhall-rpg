@@ -24,6 +24,16 @@ ITEMS = {
         "description": "Ein schneller Bogen. Bonus-XP für schnelle Antworten.",
         "effect": {"fast_xp_bonus": 10},
     },
+    "Offenbarungsstein": {
+        "type": "artifact",
+        "description": "Passiv: Gewährt 3 kostenlose Hinweise pro Kapitel. Ein Geschenk der Waldseherin.",
+        "effect": {"hints_per_chapter": 3},
+    },
+    "Glückswürfel": {
+        "type": "artifact",
+        "description": "Würfle das Schicksal! Erfolg (70%): doppelte XP auf die nächste Antwort. Misserfolg: -15 Mana.",
+        "effect": {"gamble": True},
+    },
     "Grammatikrolle": {
         "type": "scroll",
         "description": "Einmalige Verwendung: vollständige Grammatikerklärung.",

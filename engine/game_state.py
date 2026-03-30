@@ -41,7 +41,12 @@ class GameState(BaseModel):
     accuracy_total: int = 0             # cumulative correct answers
     accuracy_attempts: int = 0          # cumulative attempts
 
-    # Language level preference (player-selected, switchable anytime)
+    # Revelation Stone (hint) tracking — resets each chapter
+    chapter_hints_used: int = 0
+    hints_per_chapter: int = 3        # max free hints per chapter
+
+    # Gambling dice state — active means next correct answer gets 2x XP
+    dice_active: bool = False
     cefr_preference: str = "B2"   # A1 | A2 | B1 | B2 | C1
     episode: int = 1
     act: int = 1

@@ -67,11 +67,17 @@ def render_stats(state: GameState) -> None:
     console.print(f"  Genauigkeit: {state.accuracy_pct}%  │  Inventar: {', '.join(state.inventory) or '(leer)'}", style=GREY)
 
 
-def render_command_bar() -> None:
+def render_command_bar(state: GameState = None) -> None:
+    hints_left = ""
+    if state:
+        left = state.hints_per_chapter - state.chapter_hints_used
+        hints_left = f" ({max(0,left)} übrig)"
+    has_dice = state and "Glückswürfel" in state.inventory
+    dice_cmd = "  [magenta]/würfeln[/]" if has_dice else ""
     console.print(
-        "  [magenta]/hint[/] ·10  [magenta]/translate[/] ·15  "
-        "[magenta]/erkläre[/] ·20  [magenta]/wiederholen[/] ·5  "
-        "[magenta]/level[/]  [magenta]/quit[/]",
+        f"  [magenta]/stein[/]{hints_left}  [magenta]/translate[/] ·15  "
+        f"[magenta]/erkläre[/] ·20  [magenta]/wiederholen[/] ·5  "
+        f"[magenta]/diary[/]  [magenta]/level[/]{dice_cmd}  [magenta]/quit[/]",
         style=GREY
     )
 
@@ -153,7 +159,7 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
         console.print(Panel(prompt_text, title="[bold magenta]Herausforderung[/]",
                             border_style=PURPLE, padding=(1, 2)))
         console.print()
-        render_command_bar()
+        render_command_bar(state)
         console.print()
 
         # ── Get input ──
@@ -185,16 +191,47 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
                 time.sleep(1)
                 continue
 
-        if inp == "/hint":
-            if spend_mana(state, "/hint"):
-                console.print()
-                console.print("  [magenta]Brunhilde flüstert:[/]", style=PURPLE)
-                hint = get_hint(state.player_name, prompt_text, state.cefr_preference)
-                console.print(Panel(hint, border_style=PURPLE, padding=(0, 2)))
-                Prompt.ask("  [Weiter — Enter drücken]")
-            else:
-                console.print("  [red]Nicht genug Mana für /hint (10 benötigt).[/]")
+        if inp == "/stein":
+            hints_left = state.hints_per_chapter - state.chapter_hints_used
+            if hints_left <= 0:
+                console.print("  [red]Der Offenbarungsstein ist erschöpft. Kein Hinweis mehr in diesem Kapitel.[/]")
+                time.sleep(2)
+                continue
+            state.chapter_hints_used += 1
+            save_state(state)
+            console.print()
+            console.print(f"  [magenta]✦ Offenbarungsstein leuchtet ({hints_left - 1} verbleibend):[/]", style=PURPLE)
+            hint = get_hint(state.player_name, prompt_text, state.cefr_preference)
+            console.print(Panel(hint, border_style=PURPLE, padding=(0, 2)))
+            Prompt.ask("  [Weiter — Enter drücken]")
+            continue
+
+        if inp == "/würfeln":
+            if "Glückswürfel" not in state.inventory:
+                console.print("  [red]Du hast keine Glückswürfel.[/]")
                 time.sleep(1)
+                continue
+            if state.dice_active:
+                console.print("  [yellow]Die Würfel sind bereits aktiv![/]")
+                time.sleep(1)
+                continue
+            import random
+            # Weight success by accuracy — min 55%, max 85%
+            accuracy = state.accuracy_pct / 100
+            success_chance = 0.55 + (accuracy * 0.30)
+            roll = random.random()
+            console.print()
+            console.print("  🎲 Du wirfst die Glückswürfel...", style=GOLD)
+            time.sleep(1)
+            if roll < success_chance:
+                state.dice_active = True
+                save_state(state)
+                console.print("  [bold green]✦ Glück! Deine nächste korrekte Antwort bringt doppelte XP![/]")
+            else:
+                state.mana = max(0, state.mana - 15)
+                save_state(state)
+                console.print("  [bold red]✖ Pech! Die Würfel wenden sich gegen dich. -15 Mana.[/]")
+            time.sleep(2)
             continue
 
         if inp == "/translate":
@@ -257,10 +294,13 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
             state.accuracy_total += 1
             state.streak = getattr(state, "_answer_streak", 0) + 1
             state._answer_streak = state.streak
-            state._last_answer = inp  # store for epilogue choice detection
+            state._last_answer = inp
 
-            # XP
+            # XP — apply dice multiplier if active
             multiplier = get_active_multiplier(state)
+            if state.dice_active:
+                multiplier *= 2.0
+                state.dice_active = False
             xp = calculate_answer_xp(True, fast, state.streak, multiplier)
             xp_result = award_xp(state, xp)
 
@@ -275,6 +315,8 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
             console.print(f"  [bold green]✔ Richtig![/]  +{xp} XP", style=GREEN)
             if fast:
                 console.print("  [yellow]⚡ Schnelle Antwort! +5 Bonus[/]")
+            if multiplier >= 2.0:
+                console.print("  [bold yellow]🎲 Würfelbonus! Doppelte XP![/]")
             if xp_result["levelled_up"]:
                 console.print(f"\n  [bold yellow]🎉 LEVEL UP! Du bist jetzt Level {xp_result['new_level']}![/]")
             console.print(f"\n  {result['explanation']}", style=GREY)
@@ -350,6 +392,10 @@ def show_epilogue(state: GameState) -> None:
 
 def run_chapter(state: GameState, chapter_data: dict) -> None:
     """Narrate chapter opening, run all challenges, award completion XP."""
+
+    # Reset hint counter for this chapter
+    state.chapter_hints_used = 0
+    save_state(state)
 
     # Narration
     console.clear()
@@ -453,7 +499,7 @@ def run_game(state: GameState) -> None:
     console.print(f"  Willkommen zurück, [bold yellow]{state.player_name}[/].", style=GREY)
     console.print(f"  Akt {state.act} · Kapitel {state.chapter}", style=GREY)
     console.print()
-    render_command_bar()
+    render_command_bar(state)
     Prompt.ask("\n  [Spiel beginnen — Enter drücken]")
 
     # Chapter loop
