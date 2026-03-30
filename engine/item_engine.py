@@ -48,15 +48,38 @@ ITEMS = {
 
 
 def get_active_multiplier(state: GameState) -> float:
-    """Calculate combined XP multiplier from all equipped items."""
-    # TODO: multiply all xp_multiplier effects from inventory items
-    return 1.0
+    """Calculate combined XP multiplier from all inventory items."""
+    multiplier = 1.0
+    for item_name in state.inventory:
+        item = ITEMS.get(item_name)
+        if item:
+            multiplier *= item["effect"].get("xp_multiplier", 1.0)
+    return round(multiplier, 4)
 
 
 def get_mana_regen_bonus(state: GameState) -> int:
     """Sum of mana regen bonuses from all inventory items."""
-    # TODO: sum mana_regen_bonus effects from inventory items
-    return 0
+    bonus = 0
+    for item_name in state.inventory:
+        item = ITEMS.get(item_name)
+        if item:
+            bonus += item["effect"].get("mana_regen_bonus", 0)
+    return bonus
+
+
+def get_fast_xp_bonus(state: GameState) -> int:
+    """Extra XP awarded on fast answers from Bogen."""
+    bonus = 0
+    for item_name in state.inventory:
+        item = ITEMS.get(item_name)
+        if item:
+            bonus += item["effect"].get("fast_xp_bonus", 0)
+    return bonus
+
+
+def has_word_highlight(state: GameState) -> bool:
+    """Returns True if Wotan's Auge is in inventory."""
+    return "Wotan's Auge" in state.inventory
 
 
 def add_item(state: GameState, item_name: str) -> bool:
@@ -66,3 +89,11 @@ def add_item(state: GameState, item_name: str) -> bool:
     if item_name not in state.inventory:
         state.inventory.append(item_name)
     return True
+
+
+def describe_item(item_name: str) -> str:
+    """Return the description of an item by name."""
+    item = ITEMS.get(item_name)
+    if not item:
+        return "Unbekannter Gegenstand."
+    return item["description"]
