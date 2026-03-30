@@ -22,7 +22,7 @@ from engine.mana_engine import spend_mana, can_afford, regen_mana
 from engine.item_engine import get_active_multiplier
 from engine.srs_engine import log_mistake, log_correct
 from ai.evaluator import evaluate_answer, get_hint
-from ai.narrator import narrate_chapter, explain_grammar
+from ai.narrator import narrate_chapter, explain_grammar, narrate_epilogue
 
 console = Console()
 
@@ -202,6 +202,7 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
             state.accuracy_total += 1
             state.streak = getattr(state, "_answer_streak", 0) + 1
             state._answer_streak = state.streak
+            state._last_answer = inp  # store for epilogue choice detection
 
             # XP
             multiplier = get_active_multiplier(state)
@@ -232,6 +233,62 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
                 log_mistake(grammar_focus)
             save_state(state)
             # Loop continues so player can try again
+
+
+def detect_ending_choice(answer: str) -> str:
+    """
+    Detect whether the player chose Rache or Vergebung from their free-text answer.
+    Looks for keywords. Defaults to 'vergebung' if ambiguous.
+    """
+    answer_lower = answer.lower()
+    rache_words    = ["rache", "zerstör", "vernicht", "enden", "töt", "gefährlich", "kann nicht", "darf nicht"]
+    vergebung_words = ["vergeb", "befreie", "befreit", "heilen", "vergebung", "verstehe", "loslassen", "freiheit"]
+
+    rache_score    = sum(1 for w in rache_words if w in answer_lower)
+    vergebung_score = sum(1 for w in vergebung_words if w in answer_lower)
+
+    return "rache" if rache_score > vergebung_score else "vergebung"
+
+
+def show_epilogue(state: GameState) -> None:
+    """Display the personalised episode epilogue and completion screen."""
+    ending = state.episode_1_ending or "vergebung"
+
+    console.clear()
+    console.print(render_top_bar(state))
+    console.print()
+    console.print(Rule(title="[bold yellow]EPISODE I — ABGESCHLOSSEN[/]", style=GOLD))
+    console.print()
+
+    ending_label = "VERGEBUNG" if ending == "vergebung" else "RACHE"
+    ending_color = GREEN if ending == "vergebung" else RED
+    console.print(f"  Deine Wahl: [bold {ending_color}]{ending_label}[/]", style=GREY)
+    console.print()
+    console.print("  [grey50]Brunhilde schreibt deine Geschichte...[/]")
+
+    stats = {
+        "level":        state.level,
+        "accuracy_pct": state.accuracy_pct,
+        "streak":       state.streak,
+        "inventory":    state.inventory,
+    }
+    epilogue_text = narrate_epilogue(state.player_name, ending, stats)
+
+    console.print()
+    console.print(Panel(epilogue_text, border_style=GOLD, padding=(1, 2)))
+    console.print()
+
+    # Stats summary
+    console.print(Rule(style=GOLD))
+    console.print(f"  [bold yellow]Abschlussbericht — {state.player_name}[/]")
+    console.print(f"  Level {state.level}  ·  Genauigkeit {state.accuracy_pct}%  ·  Streak {state.streak} Tage", style=GREY)
+    console.print(f"  Inventar: {', '.join(state.inventory) or '(leer)'}", style=GREY)
+    console.print()
+
+    seal = "🌿 VERGEBUNG" if ending == "vergebung" else "⚔️  RACHE"
+    console.print(f"  [bold yellow]✦ EPISODE I COMPLETE · {seal} ✦[/]")
+    console.print()
+    Prompt.ask("  [Enter drücken um fortzufahren]")
 
 
 # ── Chapter runner ────────────────────────────────────────────────
@@ -271,6 +328,12 @@ def run_chapter(state: GameState, chapter_data: dict) -> None:
     # Completion XP
     completion_xp = chapter_data.get("completion_xp", 50)
     xp_result = award_xp(state, completion_xp)
+
+    # Detect ending choice after chapter 9
+    if chapter_data.get("chapter") == 9:
+        last_answer = getattr(state, "_last_answer", "")
+        state.episode_1_ending = detect_ending_choice(last_answer)
+
     state.chapter = chapter_data.get("unlocks_chapter", state.chapter + 1) or state.chapter
     save_state(state)
 
@@ -332,6 +395,10 @@ def run_game(state: GameState) -> None:
     while True:
         chapter_data = load_chapter(state.episode, state.act, state.chapter)
         if chapter_data is None:
-            console.print("\n  [bold yellow]Ende dieses Aktes. Fortsetzung folgt![/]")
+            # Check if episode 1 just completed
+            if state.episode == 1 and state.episode_1_ending is not None:
+                show_epilogue(state)
+            else:
+                console.print("\n  [bold yellow]Ende dieses Aktes. Fortsetzung folgt![/]")
             break
         run_chapter(state, chapter_data)

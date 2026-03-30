@@ -17,6 +17,34 @@ client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 SONNET_MODEL = "claude-sonnet-4-6"
 
 
+def narrate_epilogue(player_name: str, ending: str, stats: dict) -> str:
+    """
+    Generate the personalised episode epilogue using Sonnet.
+    Called once when chapter 9 completes.
+    ending: "rache" | "vergebung"
+    """
+    from ai.prompts import epilogue_prompt
+    prompt = epilogue_prompt(player_name, ending, stats)
+
+    try:
+        response = client.messages.create(
+            model=SONNET_MODEL,
+            max_tokens=600,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        import re
+        text = response.content[0].text.strip()
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+        text = re.sub(r'\*(.*?)\*', r'\1', text)
+        text = re.sub(r'^#{1,3}\s.*$', '', text, flags=re.MULTILINE)
+        text = re.sub(r'^---+$', '', text, flags=re.MULTILINE)
+        text = re.sub(r'^>\s.*$', '', text, flags=re.MULTILINE)
+        text = re.sub(r'\n{3,}', '\n\n', text).strip()
+        return text
+    except Exception as e:
+        return f"[Epilogue unavailable: {str(e)}]"
+
+
 def narrate_chapter(player_name: str, chapter_data: dict) -> str:
     """
     Generate immersive chapter opening text using Sonnet.

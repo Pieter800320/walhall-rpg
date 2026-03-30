@@ -60,6 +60,36 @@ Give ONE helpful hint about the grammar or vocabulary needed.
 Do NOT give the answer directly. Max 2 sentences. Write in English."""
 
 
+def epilogue_prompt(player_name: str, ending: str, stats: dict) -> str:
+    """
+    Sonnet prompt: generate a personalised episode epilogue.
+    ending: "rache" or "vergebung"
+    stats: dict with level, accuracy_pct, streak, inventory
+    """
+    ending_description = (
+        "The player chose RACHE — they destroyed the Waldwächter. The curse is broken "
+        "but the forest has lost its guardian. The world is darker for it."
+        if ending == "rache" else
+        "The player chose VERGEBUNG — they freed the Waldwächter. The spirit is reborn, "
+        "the forest heals, and Brunhilde now walks beside them as a permanent ally."
+    )
+    return f"""You are the narrator of a dark Germanic mythology RPG. Write a personalised epilogue for the player.
+
+Player name: {player_name}
+Ending chosen: {ending_description}
+Final level: {stats.get('level', 1)}
+Accuracy: {stats.get('accuracy_pct', 0)}%
+Items collected: {', '.join(stats.get('inventory', [])) or 'none'}
+Streak: {stats.get('streak', 0)} days
+
+Write 3 paragraphs of immersive epilogue narration:
+1. The immediate aftermath of the choice — what happens in the grove
+2. The village of Nebelhain healing — how the people react to {player_name}
+3. A closing paragraph that ends with the line: "Die Gilde ruft dich. Eine neue Zeitlinie beginnt."
+
+Address the protagonist as {player_name}. Dark, mythological tone. No markdown formatting whatsoever — plain text only."""
+
+
 def explanation_prompt(player_name: str, grammar_focus: str, example_sentence: str) -> str:
     """
     Sonnet prompt: full grammar explanation. Called only when player spends mana.
