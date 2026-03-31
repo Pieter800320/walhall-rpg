@@ -119,6 +119,16 @@
           "example_answer": "Können Sie mir bitte mehr über den Fluch auf meiner Familie erzählen? Ich muss die Wahrheit wissen.",
           "grammar_focus": "formal Sie request with bitte, dative meiner Familie",
           "xp_reward": 25,
+          "item_reward": null
+        },
+        {
+          "id": "c5_q6",
+          "type": "langtext",
+          "prompt_en": "The Zwergenkönig demands a written oath before he shares the secret of the curse. Write at least 60 words in German: swear your oath, explain why you seek the truth, and promise what you will do once the curse is broken.",
+          "prompt_de": "Der König verlangt einen schriftlichen Eid. Schreibe mindestens 60 Wörter auf Deutsch: schwöre deinen Eid, erkläre warum du die Wahrheit suchst, und versprich was du tun wirst, wenn der Fluch gebrochen ist.",
+          "min_words": 60,
+          "grammar_focus": "long-form writing — future tense, formal register, argumentation",
+          "xp_reward": 60,
           "item_reward": "Dämmerklinge"
         }
       ],

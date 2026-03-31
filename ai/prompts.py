@@ -79,6 +79,39 @@ Give ONE helpful hint about the grammar or vocabulary needed.
 Do NOT give the answer directly. Max 2 sentences. Write in English."""
 
 
+def langtext_prompt(player_name: str, scenario: str, player_text: str,
+                    min_words: int, cefr: str = "B2") -> str:
+    """
+    Sonnet prompt: evaluate a long-form German writing challenge.
+    Assesses grammar, vocabulary, coherence, and task completion.
+    Returns structured JSON with detailed feedback.
+    """
+    word_count = len(player_text.split())
+    return f"""You are a German writing evaluator for a fantasy RPG. Player: {player_name}, level: {cefr}.
+
+Scenario the player was responding to:
+{scenario}
+
+Player's response ({word_count} words):
+{player_text}
+
+Evaluate this German writing on four criteria. Be encouraging but honest.
+Calibrate expectations to {cefr} level — don't penalise a B1 learner for not using C1 structures.
+
+Respond ONLY in valid JSON:
+{{
+  "correct": true or false,
+  "word_count": {word_count},
+  "grammar_score": 1-5,
+  "vocabulary_score": 1-5,
+  "coherence_score": 1-5,
+  "task_score": 1-5,
+  "overall_feedback": "2-3 sentences of constructive feedback in English",
+  "best_sentence": "copy the single best German sentence from their text here",
+  "correction": "one specific grammar or vocabulary correction if needed, else empty string"
+}}"""
+
+
 def runentafel_generate_prompt(chapter_data: dict, cefr: str = "B2",
                                 seen_words: list = None) -> str:
     """

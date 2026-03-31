@@ -70,6 +70,16 @@
           "grammar_focus": "weil clause, indefinite pronoun man, dative ihm after helfen",
           "xp_reward": 30,
           "item_reward": null
+        },
+        {
+          "id": "c8_q7",
+          "type": "langtext",
+          "prompt_en": "The shadow demands to understand you before it yields. Write at least 80 words in German: describe who you are, what brought you to this forest, what you have learned on your journey, and why you deserve to break the curse.",
+          "prompt_de": "Der Schatten will dich verstehen, bevor er nachgibt. Schreibe mindestens 80 Wörter auf Deutsch: Beschreibe wer du bist, was dich in diesen Wald gebracht hat, was du auf deiner Reise gelernt hast, und warum du verdienst, den Fluch zu brechen.",
+          "min_words": 80,
+          "grammar_focus": "long-form writing — mixed tenses, Konjunktiv II, argumentation, self-expression",
+          "xp_reward": 100,
+          "item_reward": null
         }
       ],
       "completion_xp": 250,

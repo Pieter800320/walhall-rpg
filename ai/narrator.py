@@ -18,6 +18,48 @@ SONNET_MODEL = "claude-sonnet-4-6"
 HAIKU_MODEL  = "claude-haiku-4-5-20251001"
 
 
+def evaluate_langtext(player_name: str, scenario: str, player_text: str,
+                      min_words: int, cefr: str = "B2") -> dict:
+    """
+    Evaluate a long-form German writing challenge using Sonnet.
+    Returns full assessment dict.
+    """
+    from ai.prompts import langtext_prompt
+    import json as _json
+    prompt = langtext_prompt(player_name, scenario, player_text, min_words, cefr)
+    try:
+        response = client.messages.create(
+            model=SONNET_MODEL,
+            max_tokens=500,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        result = _json.loads(raw.strip())
+        return {
+            "correct":          bool(result.get("correct", False)),
+            "word_count":       result.get("word_count", len(player_text.split())),
+            "grammar_score":    result.get("grammar_score", 0),
+            "vocabulary_score": result.get("vocabulary_score", 0),
+            "coherence_score":  result.get("coherence_score", 0),
+            "task_score":       result.get("task_score", 0),
+            "overall_feedback": result.get("overall_feedback", ""),
+            "best_sentence":    result.get("best_sentence", ""),
+            "correction":       result.get("correction", ""),
+        }
+    except Exception as e:
+        return {
+            "correct": False, "word_count": len(player_text.split()),
+            "grammar_score": 0, "vocabulary_score": 0,
+            "coherence_score": 0, "task_score": 0,
+            "overall_feedback": f"Evaluation error: {str(e)}",
+            "best_sentence": "", "correction": "",
+        }
+
+
 def generate_flashcards(chapter_data: dict, cefr: str = "B2",
                         seen_words: list = None) -> list:
     """

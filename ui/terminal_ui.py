@@ -24,7 +24,8 @@ from engine.srs_engine import log_mistake, log_correct
 from ai.evaluator import evaluate_answer, get_hint
 from ai.narrator import (narrate_chapter, explain_grammar, narrate_epilogue,
                           generate_diary_entry, evaluate_leseverstehen,
-                          elder_scroll_lookup, generate_flashcards, evaluate_flashcard)
+                          elder_scroll_lookup, generate_flashcards,
+                          evaluate_flashcard, evaluate_langtext)
 from engine.diary import get_entry, store_entry, get_all_entries_text
 from engine.flashcard import mark_seen, get_seen_count, mana_reward
 
@@ -239,6 +240,13 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
             for i, opt in enumerate(options, 1):
                 console.print(f"  [bold yellow]{i}[/]  {opt}", style=GREY)
 
+        # Langtext — show word count target
+        if challenge_type == "langtext":
+            min_words = challenge.get("min_words", 50)
+            console.print()
+            console.print(f"  [grey50]Mindestens {min_words} Wörter auf Deutsch.[/]")
+            console.print(f"  [grey50]Tipp: Schreibe deinen Text und drücke Enter.[/]")
+
         console.print()
         render_command_bar(state)
         console.print()
@@ -389,8 +397,62 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
         if not inp:
             continue
 
+        # ── Langtext challenge type ───────────────────────────────
+        if challenge_type == "langtext":
+            min_words = challenge.get("min_words", 50)
+            word_count = len(inp.split())
+            if word_count < min_words:
+                console.print(f"\n  [red]Zu kurz! Du hast {word_count} Wörter geschrieben. "
+                               f"Mindestens {min_words} benötigt.[/]")
+                time.sleep(2)
+                continue  # don't consume the attempt — let them try again
+
+            console.print(f"  [grey50]Sonnet bewertet deinen Text ({word_count} Wörter)...[/]")
+            scenario = challenge.get("prompt_en", "")
+            lt_result = evaluate_langtext(
+                state.player_name, scenario, inp, min_words, state.cefr_preference
+            )
+
+            # Show detailed feedback screen
+            console.clear()
+            console.print(render_top_bar(state))
+            console.print()
+            console.print(Rule(title="[bold yellow]✦ Schreibbewertung ✦[/]", style=GOLD))
+            console.print()
+
+            # Score bars
+            for label, score in [
+                ("Grammatik  ", lt_result["grammar_score"]),
+                ("Wortschatz ", lt_result["vocabulary_score"]),
+                ("Kohärenz   ", lt_result["coherence_score"]),
+                ("Aufgabe    ", lt_result["task_score"]),
+            ]:
+                bar = "█" * score + "░" * (5 - score)
+                color = GREEN if score >= 4 else GOLD if score >= 3 else RED
+                console.print(f"  {label} [{bar}] {score}/5", style=color)
+
+            console.print()
+            console.print(f"  [grey50]{lt_result['overall_feedback']}[/]")
+
+            if lt_result["best_sentence"]:
+                console.print()
+                console.print(f"  [bold green]✦ Bester Satz:[/]", style=GREEN)
+                console.print(f'  "{lt_result["best_sentence"]}"', style=GOLD)
+
+            if lt_result["correction"]:
+                console.print()
+                console.print(f"  [bold yellow]Korrektur:[/] {lt_result['correction']}")
+
+            # Build result for normal XP flow
+            result = {
+                "correct":       lt_result["correct"],
+                "explanation":   lt_result["overall_feedback"],
+                "grammar_focus": "long-form writing",
+            }
+            last_result = result
+
         # ── Leseverstehen challenge type ──────────────────────────
-        if challenge_type == "leseverstehen":
+        elif challenge_type == "leseverstehen":
             diary_entry = challenge.get("_diary_entry", "")
             question    = challenge.get("leseverstehen_question", "")
             console.print("  [grey50]Brunhilde bewertet deine Antwort...[/]")
