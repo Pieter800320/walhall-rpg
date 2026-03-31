@@ -79,6 +79,46 @@ Give ONE helpful hint about the grammar or vocabulary needed.
 Do NOT give the answer directly. Max 2 sentences. Write in English."""
 
 
+def runentafel_generate_prompt(chapter_data: dict, cefr: str = "B2",
+                                seen_words: list = None) -> str:
+    """
+    Haiku prompt: generate 5 vocabulary flashcards from the current chapter.
+    Returns JSON array of { german, english, example } objects.
+    """
+    seen_note = f"Do NOT include these already-seen words: {', '.join(seen_words)}." if seen_words else ""
+    return f"""You are a German vocabulary teacher creating flashcards for a fantasy RPG.
+Chapter context: {chapter_data.get('title', '')} — {chapter_data.get('language_focus', '')}
+Setting: {chapter_data.get('setting', '')}
+Level: {cefr} ({CEFR_DESCRIPTIONS.get(cefr, '')})
+{seen_note}
+
+Generate exactly 5 vocabulary flashcards relevant to this chapter's theme and language focus.
+Choose words a {cefr} learner should know. Include nouns, verbs, and adjectives.
+
+Respond ONLY with a valid JSON array, no extra text:
+[
+  {{"german": "der Wald", "english": "the forest", "example": "Ich gehe in den Wald."}},
+  ...
+]"""
+
+
+def runentafel_evaluate_prompt(german: str, english: str,
+                                player_answer: str, cefr: str = "B2") -> str:
+    """
+    Haiku prompt: evaluate a flashcard answer (English → German translation).
+    """
+    return f"""You are evaluating a German vocabulary flashcard answer. Player level: {cefr}.
+
+The English word/phrase is: "{english}"
+The correct German is: "{german}"
+The player answered: "{player_answer}"
+
+Accept close answers, alternate spellings, and correct synonyms.
+For nouns, accept with or without the article unless the article is the key learning point.
+Respond ONLY in valid JSON:
+{{"correct": true or false, "feedback": "one sentence max"}}"""
+
+
 def elder_scroll_prompt(word: str, cefr: str = "B2") -> str:
     """
     Haiku prompt: look up a German word and return a German-language definition.

@@ -18,6 +18,61 @@ SONNET_MODEL = "claude-sonnet-4-6"
 HAIKU_MODEL  = "claude-haiku-4-5-20251001"
 
 
+def generate_flashcards(chapter_data: dict, cefr: str = "B2",
+                        seen_words: list = None) -> list:
+    """
+    Generate 5 vocabulary flashcards for the current chapter using Haiku.
+    Returns list of { german, english, example } dicts.
+    """
+    from ai.prompts import runentafel_generate_prompt
+    import json as _json
+    prompt = runentafel_generate_prompt(chapter_data, cefr, seen_words or [])
+    try:
+        response = client.messages.create(
+            model=HAIKU_MODEL,
+            max_tokens=400,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        return _json.loads(raw.strip())
+    except Exception as e:
+        return [{"german": "der Fehler", "english": "the error",
+                 "example": f"Ein Fehler ist aufgetreten: {str(e)}"}]
+
+
+def evaluate_flashcard(german: str, english: str,
+                       player_answer: str, cefr: str = "B2") -> dict:
+    """
+    Evaluate a single flashcard answer using Haiku.
+    Returns { correct: bool, feedback: str }
+    """
+    from ai.prompts import runentafel_evaluate_prompt
+    import json as _json
+    prompt = runentafel_evaluate_prompt(german, english, player_answer, cefr)
+    try:
+        response = client.messages.create(
+            model=HAIKU_MODEL,
+            max_tokens=100,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        result = _json.loads(raw.strip())
+        return {
+            "correct":  bool(result.get("correct", False)),
+            "feedback": result.get("feedback", ""),
+        }
+    except Exception as e:
+        return {"correct": False, "feedback": f"Evaluation error: {str(e)}"}
+
+
 def elder_scroll_lookup(word: str, cefr: str = "B2") -> str:
     """
     Look up a German word using Haiku. Returns a German-language definition.

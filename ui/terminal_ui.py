@@ -22,8 +22,11 @@ from engine.mana_engine import spend_mana, can_afford, regen_mana
 from engine.item_engine import get_active_multiplier
 from engine.srs_engine import log_mistake, log_correct
 from ai.evaluator import evaluate_answer, get_hint
-from ai.narrator import narrate_chapter, explain_grammar, narrate_epilogue, generate_diary_entry, evaluate_leseverstehen, elder_scroll_lookup
+from ai.narrator import (narrate_chapter, explain_grammar, narrate_epilogue,
+                          generate_diary_entry, evaluate_leseverstehen,
+                          elder_scroll_lookup, generate_flashcards, evaluate_flashcard)
 from engine.diary import get_entry, store_entry, get_all_entries_text
+from engine.flashcard import mark_seen, get_seen_count, mana_reward
 
 console = Console()
 
@@ -74,12 +77,14 @@ def render_command_bar(state: GameState = None) -> None:
         hints_left = f" ({max(0,left)} übrig)"
     has_dice   = state and "Glückswürfel" in state.inventory
     has_scroll = state and "Ältere Schriftrolle" in state.inventory
+    has_runen  = state and "Runentafel" in state.inventory
     dice_cmd   = "  [magenta]/würfeln[/]" if has_dice else ""
     scroll_cmd = "  [magenta]/scroll[/]" if has_scroll else ""
+    runen_cmd  = "  [magenta]/runen[/]" if has_runen else ""
     console.print(
         f"  [magenta]/stein[/]{hints_left}  [magenta]/translate[/] ·15  "
         f"[magenta]/erkläre[/] ·20  [magenta]/wiederholen[/] ·5  "
-        f"[magenta]/diary[/]  [magenta]/level[/]{dice_cmd}{scroll_cmd}  [magenta]/quit[/]",
+        f"[magenta]/diary[/]  [magenta]/level[/]{dice_cmd}{scroll_cmd}{runen_cmd}  [magenta]/quit[/]",
         style=GREY
     )
 
@@ -126,6 +131,71 @@ def show_name_screen() -> tuple:
     name = name.strip() or "Grimnir"
     cefr = show_level_screen()
     return name, cefr
+
+
+def run_flashcard_round(state: GameState, chapter_data: dict) -> None:
+    """
+    Run a 5-card Runentafel vocabulary round.
+    Correct answers restore Mana instead of awarding XP.
+    """
+    console.clear()
+    console.print(render_top_bar(state))
+    console.print()
+    console.print(Rule(title="[bold yellow]✦ Runentafel ✦[/]", style=GOLD))
+    console.print()
+    console.print("  [grey50]Die Runen leuchten auf...[/]")
+
+    seen = [w for w in __import__('engine.flashcard', fromlist=['load_flashcard_history'])
+            .load_flashcard_history().keys()]
+    cards = generate_flashcards(chapter_data, state.cefr_preference, seen)
+
+    correct_count = 0
+    for i, card in enumerate(cards, 1):
+        console.clear()
+        console.print(render_top_bar(state))
+        console.print()
+        console.print(Rule(title=f"[bold yellow]Runentafel — Karte {i}/{len(cards)}[/]", style=GOLD))
+        console.print()
+        console.print(Panel(
+            f"[bold]{card['english']}[/]\n\n[grey50]Beispiel: {card['example']}[/]",
+            title="[cyan]Wie heißt das auf Deutsch?[/]",
+            border_style=BLUE, padding=(1, 2)
+        ))
+        console.print()
+
+        try:
+            answer = Prompt.ask(f"  [bold yellow]{state.player_name}[/]")
+        except (KeyboardInterrupt, EOFError):
+            break
+
+        result = evaluate_flashcard(card["german"], card["english"],
+                                    answer.strip(), state.cefr_preference)
+        mark_seen(card["german"])
+
+        if result["correct"]:
+            correct_count += 1
+            console.print(f"  [bold green]✔ Richtig![/]  {card['german']}")
+        else:
+            console.print(f"  [bold red]✖[/]  Richtig wäre: [yellow]{card['german']}[/]")
+        if result["feedback"]:
+            console.print(f"  [grey50]{result['feedback']}[/]")
+        time.sleep(1.5)
+
+    # Award Mana
+    mana_gained = mana_reward(correct_count, len(cards))
+    state.mana = min(state.mana + mana_gained, state.mana_max)
+    save_state(state)
+
+    console.clear()
+    console.print(render_top_bar(state))
+    console.print()
+    console.print(Rule(title="[bold yellow]✦ Runentafel — Abgeschlossen ✦[/]", style=GOLD))
+    console.print()
+    console.print(f"  Ergebnis: [bold]{correct_count}/{len(cards)}[/] korrekt", style=GOLD)
+    console.print(f"  [magenta]+{mana_gained} Mana restauriert[/]")
+    if correct_count == len(cards):
+        console.print("  [bold green]✦ Perfekte Runde![/]")
+    Prompt.ask("\n  [Weiter — Enter drücken]")
 
 
 # ── Challenge loop ────────────────────────────────────────────────
@@ -283,6 +353,16 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
                 border_style=GOLD, padding=(1, 2)
             ))
             Prompt.ask("  [Weiter — Enter drücken]")
+            continue
+
+        if inp == "/runen":
+            if "Runentafel" not in state.inventory:
+                console.print("  [red]Du besitzt die Runentafel nicht.[/]")
+                time.sleep(1)
+                continue
+            # Load current chapter data for flashcard context
+            ch_data = load_chapter(state.episode, state.act, state.chapter) or {}
+            run_flashcard_round(state, ch_data)
             continue
 
         if inp.startswith("/scroll"):
