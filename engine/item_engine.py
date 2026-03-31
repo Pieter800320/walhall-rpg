@@ -1,50 +1,119 @@
 """
-engine/flashcard.py
-====================
-The Runentafel — a vocabulary flashcard system.
-Words are drawn from the current chapter's language focus and SRS weak items.
-Completing a round restores Mana instead of awarding XP,
-making it a recovery mechanic when the player is running low.
+engine/item_engine.py
+======================
+Defines all items and their passive/active effects.
+Items modify XP multipliers, mana regen, and speed bonuses.
 """
 
-import json
-import os
+from engine.game_state import GameState
 
-FLASHCARD_PATH = os.path.join(os.path.dirname(__file__), "..", "save", "flashcards.json")
+# Full item catalogue
+ITEMS = {
+    "Schwert": {
+        "type": "weapon",
+        "description": "Ein treues Schwert. Erhöht XP für korrekte Antworten.",
+        "effect": {"xp_multiplier": 1.2},
+    },
+    "Stab": {
+        "type": "weapon",
+        "description": "Ein magischer Stab. Erhöht Manaregeneration.",
+        "effect": {"mana_regen_bonus": 2},
+    },
+    "Bogen": {
+        "type": "weapon",
+        "description": "Ein schneller Bogen. Bonus-XP für schnelle Antworten.",
+        "effect": {"fast_xp_bonus": 10},
+    },
+    "Runentafel": {
+        "type": "artifact",
+        "description": "Passiv: /runen startet eine Vokabelrunde. Korrekte Antworten restaurieren Mana statt XP.",
+        "effect": {"flashcards": True},
+    },
+    "Offenbarungsstein": {
+        "type": "artifact",
+        "description": "Passiv: Gewährt 3 kostenlose Hinweise pro Kapitel. Ein Geschenk der Waldseherin.",
+        "effect": {"hints_per_chapter": 3},
+    },
+    "Glückswürfel": {
+        "type": "artifact",
+        "description": "Würfle das Schicksal! Erfolg (70%): doppelte XP auf die nächste Antwort. Misserfolg: -15 Mana.",
+        "effect": {"gamble": True},
+    },
+    "Ältere Schriftrolle": {
+        "type": "artifact",
+        "description": "Passiv: /scroll schlägt jedes deutsche Wort nach — Definitionen nur auf Deutsch.",
+        "effect": {"dictionary": True},
+    },
+    "Grammatikrolle": {
+        "type": "scroll",
+        "description": "Einmalige Verwendung: vollständige Grammatikerklärung.",
+        "effect": {"one_time": "grammar_explanation"},
+    },
+    "Runenstein": {
+        "type": "artifact",
+        "description": "Passiv: +5% XP auf alle Antworten.",
+        "effect": {"xp_multiplier": 1.05},
+    },
+    "Wotan's Auge": {
+        "type": "artifact",
+        "description": "Passiv: unbekannte Wörter im Storymodus werden hervorgehoben.",
+        "effect": {"highlight_words": True},
+    },
+    "Dämmerklinge": {
+        "type": "weapon",
+        "description": "Leuchtet, wenn eine Antwort korrekt ist.",
+        "effect": {"visual_correct_pulse": True, "xp_multiplier": 1.15},
+    },
+}
 
 
-def load_flashcard_history() -> dict:
-    """Load seen flashcard words to avoid repetition."""
-    if not os.path.exists(FLASHCARD_PATH):
-        return {}
-    with open(FLASHCARD_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+def get_active_multiplier(state: GameState) -> float:
+    """Calculate combined XP multiplier from all inventory items."""
+    multiplier = 1.0
+    for item_name in state.inventory:
+        item = ITEMS.get(item_name)
+        if item:
+            multiplier *= item["effect"].get("xp_multiplier", 1.0)
+    return round(multiplier, 4)
 
 
-def save_flashcard_history(history: dict) -> None:
-    os.makedirs(os.path.dirname(FLASHCARD_PATH), exist_ok=True)
-    with open(FLASHCARD_PATH, "w", encoding="utf-8") as f:
-        json.dump(history, f, indent=2, ensure_ascii=False)
+def get_mana_regen_bonus(state: GameState) -> int:
+    """Sum of mana regen bonuses from all inventory items."""
+    bonus = 0
+    for item_name in state.inventory:
+        item = ITEMS.get(item_name)
+        if item:
+            bonus += item["effect"].get("mana_regen_bonus", 0)
+    return bonus
 
 
-def mark_seen(word: str) -> None:
-    """Mark a word as seen in a flashcard round."""
-    history = load_flashcard_history()
-    history[word.lower()] = history.get(word.lower(), 0) + 1
-    save_flashcard_history(history)
+def get_fast_xp_bonus(state: GameState) -> int:
+    """Extra XP awarded on fast answers from Bogen."""
+    bonus = 0
+    for item_name in state.inventory:
+        item = ITEMS.get(item_name)
+        if item:
+            bonus += item["effect"].get("fast_xp_bonus", 0)
+    return bonus
 
 
-def get_seen_count(word: str) -> int:
-    history = load_flashcard_history()
-    return history.get(word.lower(), 0)
+def has_word_highlight(state: GameState) -> bool:
+    """Returns True if Wotan's Auge is in inventory."""
+    return "Wotan's Auge" in state.inventory
 
 
-def mana_reward(correct: int, total: int) -> int:
-    """
-    Calculate mana reward for a flashcard round.
-    Perfect round: +25 Mana. Each correct answer: +5 Mana. Min 0.
-    """
-    base = correct * 5
-    if correct == total:
-        base += 10  # perfect round bonus
-    return base
+def add_item(state: GameState, item_name: str) -> bool:
+    """Add an item to inventory if it exists. Returns True on success."""
+    if item_name not in ITEMS:
+        return False
+    if item_name not in state.inventory:
+        state.inventory.append(item_name)
+    return True
+
+
+def describe_item(item_name: str) -> str:
+    """Return the description of an item by name."""
+    item = ITEMS.get(item_name)
+    if not item:
+        return "Unbekannter Gegenstand."
+    return item["description"]
