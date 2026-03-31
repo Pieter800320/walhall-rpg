@@ -41,6 +41,9 @@ STORY_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 
 app = FastAPI(title="Walhall RPG API", version="1.0")
 
+# Ensure save directory exists on Railway
+os.makedirs(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "save"), exist_ok=True)
+
 # Allow React dev server and Railway frontend to call the API
 app.add_middleware(
     CORSMiddleware,
@@ -108,6 +111,20 @@ class LangtextRequest(BaseModel):
 @app.get("/")
 def root():
     return {"status": "Walhall RPG API is running"}
+
+
+@app.get("/debug")
+def debug():
+    """Shows file structure on Railway for debugging."""
+    import glob
+    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return {
+        "base_dir": base,
+        "story_dir": STORY_DIR,
+        "story_files": glob.glob(os.path.join(STORY_DIR, "*.json")),
+        "save_dir_exists": os.path.exists(os.path.join(base, "save")),
+        "api_dir": os.path.dirname(os.path.abspath(__file__)),
+    }
 
 
 @app.get("/api/state")
