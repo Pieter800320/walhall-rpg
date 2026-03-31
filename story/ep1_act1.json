@@ -6,7 +6,7 @@
     {
       "chapter": 1,
       "title": "Das Dorf am Rhein",
-      "setting": "The village of Nebelhain at dusk. Smoke rises from thatched roofs. Villagers watch the stranger arrive with wary eyes.",
+      "setting": "The village of Nebelhain at dusk. Smoke rises from thatched rooftops. Villagers watch the stranger arrive with wary eyes.",
       "plot_beat": "Player arrives in Nebelhain. Must speak to 3 villagers to earn their trust.",
       "language_focus": "Greetings, introductions, present tense verbs",
       "cefr_target": "A1",
@@ -15,7 +15,7 @@
           "id": "c1_q1",
           "type": "dialogantwort",
           "npc": "Dorfälteste",
-          "prompt_de": "Wer bist du, Fremder?",
+          "prompt_de": "Eine alte Frau versperrt dir den Weg. Sie fragt: 'Wer bist du, Fremder?' — Antworte ihr auf Deutsch.",
           "prompt_en": "An old woman blocks your path. She asks: 'Who are you, stranger?' — answer her in German.",
           "example_answer": "Ich bin [name]. Ich komme aus dem Norden.",
           "grammar_focus": "verb sein (to be), first person present",
@@ -25,6 +25,7 @@
         {
           "id": "c1_q2",
           "type": "übersetzung",
+          "prompt_de": "Übersetze ins Deutsche: 'I am looking for help.'",
           "prompt_en": "Translate: 'I am looking for help.'",
           "correct_de": "Ich suche Hilfe.",
           "grammar_focus": "present tense, accusative object",
@@ -35,7 +36,7 @@
           "id": "c1_q3",
           "type": "dialogantwort",
           "npc": "Kind",
-          "prompt_de": "Kannst du uns helfen?",
+          "prompt_de": "Ein Kind läuft auf dich zu und fragt: 'Kannst du uns helfen?' — Antworte auf Deutsch.",
           "prompt_en": "A child runs up to you and asks: 'Can you help us?' — answer in German.",
           "example_answer": "Ja, ich kann helfen. Was ist passiert?",
           "grammar_focus": "modal verb können, first person",
@@ -45,6 +46,7 @@
         {
           "id": "c1_q4",
           "type": "multiple_choice",
+          "prompt_de": "Die Älteste fragt, was du willst. Welcher Satz bedeutet 'I want to help the village'?",
           "prompt_en": "The elder asks what you want. Which sentence correctly means 'I want to help the village'?",
           "options": [
             "Ich will das Dorf helfen.",
@@ -72,6 +74,7 @@
         {
           "id": "c2_q1",
           "type": "übersetzung",
+          "prompt_de": "Übersetze ins Deutsche: 'I have gone into the forest.'",
           "prompt_en": "Translate: 'I have gone into the forest.'",
           "correct_de": "Ich bin in den Wald gegangen.",
           "grammar_focus": "Perfekt tense with sein",
@@ -81,6 +84,7 @@
         {
           "id": "c2_q2",
           "type": "fehlerkorrektur",
+          "prompt_de": "Korrigiere den Fehler: 'Der Baum ist sehr alt und er hat viele Jahren gelebt.'",
           "prompt_en": "Fix the sentence: 'Der Baum ist sehr alt und er hat viele Jahren gelebt.' — find and correct the error.",
           "correct_de": "Der Baum ist sehr alt und er hat viele Jahre gelebt.",
           "grammar_focus": "accusative case after haben",
@@ -91,7 +95,7 @@
           "id": "c2_q3",
           "type": "dialogantwort",
           "npc": "Schattengeist",
-          "prompt_de": "Der Schatten flüstert: 'Wo bist du hergekommen?'",
+          "prompt_de": "Der Schatten flüstert aus den Bäumen: 'Wo bist du hergekommen?' — Antworte auf Deutsch im Perfekt.",
           "prompt_en": "The shadow whispers from the trees: 'Where have you come from?' — answer in German using Perfekt tense.",
           "example_answer": "Ich bin aus dem Norden gekommen.",
           "grammar_focus": "Perfekt tense with sein, directional phrases",
@@ -101,6 +105,7 @@
         {
           "id": "c2_q4",
           "type": "satzbau",
+          "prompt_de": "Bringe die Wörter in die richtige Reihenfolge: 'gesehen / habe / Schatten / Ich / den / heute Nacht'",
           "prompt_en": "Reconstruct this scrambled sentence: 'gesehen / habe / Schatten / Ich / den / heute Nacht'",
           "correct_de": "Ich habe den Schatten heute Nacht gesehen.",
           "grammar_focus": "Perfekt word order, accusative definite article",
@@ -110,6 +115,7 @@
         {
           "id": "c2_q5",
           "type": "leseverstehen",
+          "prompt_de": "Dein Tagebucheintrag erscheint oben. Lies ihn sorgfältig und antworte auf Deutsch: Was hast du am Rand des Waldes gefunden?",
           "prompt_en": "Your diary entry for today appears above. Read it carefully, then answer in German: What did you find at the edge of the forest?",
           "leseverstehen_question": "What did the player find at the edge of the Nebelwald, according to their diary entry?",
           "grammar_focus": "reading comprehension",
@@ -132,7 +138,7 @@
           "id": "c3_q1",
           "type": "dialogantwort",
           "npc": "Brunhilde",
-          "prompt_de": "Brunhilde fragt: 'Was musst du hier finden?'",
+          "prompt_de": "Brunhilde starrt ins Feuer und fragt: 'Was musst du hier finden?' — Antworte auf Deutsch mit einem Modalverb.",
           "prompt_en": "Brunhilde stares into the fire and asks: 'What must you find here?' — answer in German using a modal verb.",
           "example_answer": "Ich muss die Wahrheit über meinen Fluch finden.",
           "grammar_focus": "modal verb müssen, accusative object",
@@ -142,6 +148,7 @@
         {
           "id": "c3_q2",
           "type": "übersetzung",
+          "prompt_de": "Übersetze ins Deutsche: 'I cannot leave without help.'",
           "prompt_en": "Translate: 'I cannot leave without help.'",
           "correct_de": "Ich kann nicht ohne Hilfe gehen.",
           "grammar_focus": "modal verb können, negation with nicht",
@@ -151,6 +158,7 @@
         {
           "id": "c3_q3",
           "type": "fehlerkorrektur",
+          "prompt_de": "Korrigiere den Fehler in diesem Satz: 'Du darfst nicht die alten Götter vergessen werden.'",
           "prompt_en": "Fix the sentence: 'Du darfst nicht die alten Götter vergessen werden.'",
           "correct_de": "Du darfst die alten Götter nicht vergessen.",
           "grammar_focus": "modal verb dürfen, infinitive without werden",
@@ -161,7 +169,7 @@
           "id": "c3_q4",
           "type": "dialogantwort",
           "npc": "Brunhilde",
-          "prompt_de": "Brunhilde flüstert: 'Kannst du dem Schatten allein widerstehen?'",
+          "prompt_de": "Brunhilde flüstert: 'Kannst du dem Schatten allein widerstehen?' — Antworte ehrlich auf Deutsch mit können.",
           "prompt_en": "Brunhilde whispers: 'Can you resist the shadow alone?' — answer honestly in German, using können.",
           "example_answer": "Ich kann dem Schatten nicht allein widerstehen. Ich brauche deine Hilfe.",
           "grammar_focus": "modal verb können, dative object with widerstehen",

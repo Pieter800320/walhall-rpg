@@ -1098,7 +1098,7 @@ function GameScreen({ initialState }) {
       const r = await api("/api/answer", "POST", {
         challenge_id:          chal.id || "",
         challenge_type:        chal.type || "dialogantwort",
-        prompt_en:             chal.prompt_en || chal.prompt_de || "",
+        prompt_en:             chal.prompt_de || chal.prompt_en || "",
         player_answer:         answer.trim(),
         grammar_focus:         chal.grammar_focus || "",
         min_words:             chal.min_words || 0,
@@ -1467,7 +1467,7 @@ function GameScreen({ initialState }) {
           )}
 
           <div className="challenge-box">
-            <div className="challenge-prompt">{chal.prompt_en || chal.prompt_de}</div>
+            <div className="challenge-prompt">{chal.prompt_de || chal.prompt_en}</div>
           </div>
 
           {/* Multiple choice */}
