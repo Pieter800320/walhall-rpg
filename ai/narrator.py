@@ -18,6 +18,23 @@ SONNET_MODEL = "claude-sonnet-4-6"
 HAIKU_MODEL  = "claude-haiku-4-5-20251001"
 
 
+def elder_scroll_lookup(word: str, cefr: str = "B2") -> str:
+    """
+    Look up a German word using Haiku. Returns a German-language definition.
+    """
+    from ai.prompts import elder_scroll_prompt
+    prompt = elder_scroll_prompt(word, cefr)
+    try:
+        response = client.messages.create(
+            model=HAIKU_MODEL,
+            max_tokens=200,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.content[0].text.strip()
+    except Exception as e:
+        return f"Die Schriftrolle schweigt. ({str(e)})"
+
+
 def generate_diary_entry(player_name: str, chapter_data: dict, cefr: str = "B2") -> str:
     """
     Generate and return a diary entry for the given chapter using Sonnet.

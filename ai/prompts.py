@@ -79,6 +79,20 @@ Give ONE helpful hint about the grammar or vocabulary needed.
 Do NOT give the answer directly. Max 2 sentences. Write in English."""
 
 
+def elder_scroll_prompt(word: str, cefr: str = "B2") -> str:
+    """
+    Haiku prompt: look up a German word and return a German-language definition.
+    Deliberately in German only — the friction is intentional.
+    """
+    return f"""You are an ancient Germanic scholar — the keeper of the Elder Scroll.
+A {cefr}-level German learner asks about the word: "{word}"
+
+Respond with a short German-language definition (2-3 sentences maximum).
+Include: the article if it is a noun (der/die/das), the word class, and a usage example sentence.
+Write ONLY in German. No English. No markdown. Plain text only.
+If the word does not exist, say so briefly in German."""
+
+
 def diary_entry_prompt(player_name: str, chapter_data: dict, cefr: str = "B2") -> str:
     """
     Sonnet prompt: generate a first-person diary entry for the current chapter.

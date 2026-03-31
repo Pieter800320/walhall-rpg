@@ -34,6 +34,11 @@ ITEMS = {
         "description": "Würfle das Schicksal! Erfolg (70%): doppelte XP auf die nächste Antwort. Misserfolg: -15 Mana.",
         "effect": {"gamble": True},
     },
+    "Ältere Schriftrolle": {
+        "type": "artifact",
+        "description": "Passiv: /scroll schlägt jedes deutsche Wort nach — Definitionen nur auf Deutsch.",
+        "effect": {"dictionary": True},
+    },
     "Grammatikrolle": {
         "type": "scroll",
         "description": "Einmalige Verwendung: vollständige Grammatikerklärung.",

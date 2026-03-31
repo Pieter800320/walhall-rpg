@@ -40,6 +40,21 @@
           "example_answer": "Ja, ich kann helfen. Was ist passiert?",
           "grammar_focus": "modal verb können, first person",
           "xp_reward": 15,
+          "item_reward": null
+        },
+        {
+          "id": "c1_q4",
+          "type": "multiple_choice",
+          "prompt_en": "The elder asks what you want. Which sentence correctly means 'I want to help the village'?",
+          "options": [
+            "Ich will das Dorf helfen.",
+            "Ich möchte dem Dorf helfen.",
+            "Ich will dem Dorf geholfen.",
+            "Ich möchte das Dorf helfen."
+          ],
+          "correct_de": "Ich möchte dem Dorf helfen.",
+          "grammar_focus": "dative dem Dorf after helfen, modal möchten",
+          "xp_reward": 15,
           "item_reward": "Schwert"
         }
       ],
@@ -90,7 +105,7 @@
           "correct_de": "Ich habe den Schatten heute Nacht gesehen.",
           "grammar_focus": "Perfekt word order, accusative definite article",
           "xp_reward": 20,
-          "item_reward": null
+          "item_reward": "Ältere Schriftrolle"
         },
         {
           "id": "c2_q5",

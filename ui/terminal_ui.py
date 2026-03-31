@@ -22,7 +22,7 @@ from engine.mana_engine import spend_mana, can_afford, regen_mana
 from engine.item_engine import get_active_multiplier
 from engine.srs_engine import log_mistake, log_correct
 from ai.evaluator import evaluate_answer, get_hint
-from ai.narrator import narrate_chapter, explain_grammar, narrate_epilogue, generate_diary_entry, evaluate_leseverstehen
+from ai.narrator import narrate_chapter, explain_grammar, narrate_epilogue, generate_diary_entry, evaluate_leseverstehen, elder_scroll_lookup
 from engine.diary import get_entry, store_entry, get_all_entries_text
 
 console = Console()
@@ -72,12 +72,14 @@ def render_command_bar(state: GameState = None) -> None:
     if state:
         left = state.hints_per_chapter - state.chapter_hints_used
         hints_left = f" ({max(0,left)} übrig)"
-    has_dice = state and "Glückswürfel" in state.inventory
-    dice_cmd = "  [magenta]/würfeln[/]" if has_dice else ""
+    has_dice   = state and "Glückswürfel" in state.inventory
+    has_scroll = state and "Ältere Schriftrolle" in state.inventory
+    dice_cmd   = "  [magenta]/würfeln[/]" if has_dice else ""
+    scroll_cmd = "  [magenta]/scroll[/]" if has_scroll else ""
     console.print(
         f"  [magenta]/stein[/]{hints_left}  [magenta]/translate[/] ·15  "
         f"[magenta]/erkläre[/] ·20  [magenta]/wiederholen[/] ·5  "
-        f"[magenta]/diary[/]  [magenta]/level[/]{dice_cmd}  [magenta]/quit[/]",
+        f"[magenta]/diary[/]  [magenta]/level[/]{dice_cmd}{scroll_cmd}  [magenta]/quit[/]",
         style=GREY
     )
 
@@ -133,8 +135,10 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
     Display one challenge, handle player input and commands.
     Returns True if the player answered correctly.
     """
-    prompt_text = challenge.get("prompt_en", challenge.get("prompt_de", ""))
+    prompt_text   = challenge.get("prompt_en", challenge.get("prompt_de", ""))
     grammar_focus = challenge.get("grammar_focus", "")
+    challenge_type = challenge.get("type", "")
+    options       = challenge.get("options", [])
     start_time = time.time()
     last_result = None
 
@@ -158,6 +162,13 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
         # Challenge prompt
         console.print(Panel(prompt_text, title="[bold magenta]Herausforderung[/]",
                             border_style=PURPLE, padding=(1, 2)))
+
+        # Multiple choice options
+        if challenge_type == "multiple_choice" and options:
+            console.print()
+            for i, opt in enumerate(options, 1):
+                console.print(f"  [bold yellow]{i}[/]  {opt}", style=GREY)
+
         console.print()
         render_command_bar(state)
         console.print()
@@ -169,6 +180,12 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
             break
 
         inp = raw.strip()
+
+        # Resolve number input for multiple choice
+        if challenge_type == "multiple_choice" and options and inp.isdigit():
+            idx = int(inp) - 1
+            if 0 <= idx < len(options):
+                inp = options[idx]
 
         # ── Commands ──
         if inp == "/quit":
@@ -268,11 +285,31 @@ def run_challenge(state: GameState, challenge: dict) -> bool:
             Prompt.ask("  [Weiter — Enter drücken]")
             continue
 
+        if inp.startswith("/scroll"):
+            if "Ältere Schriftrolle" not in state.inventory:
+                console.print("  [red]Du besitzt die Ältere Schriftrolle nicht.[/]")
+                time.sleep(1)
+                continue
+            parts = inp.split(maxsplit=1)
+            if len(parts) < 2 or not parts[1].strip():
+                console.print("  [yellow]Verwendung: /scroll <deutsches Wort>[/]")
+                time.sleep(1)
+                continue
+            word = parts[1].strip()
+            console.print(f"\n  [yellow]✦ Die Ältere Schriftrolle öffnet sich...[/]")
+            definition = elder_scroll_lookup(word, state.cefr_preference)
+            console.print(Panel(
+                definition,
+                title=f"[bold yellow]📜 {word}[/]",
+                border_style=GOLD, padding=(1, 2)
+            ))
+            Prompt.ask("  [Weiter — Enter drücken]")
+            continue
+
         if not inp:
             continue
 
         # ── Leseverstehen challenge type ──────────────────────────
-        challenge_type = challenge.get("type", "")
         if challenge_type == "leseverstehen":
             diary_entry = challenge.get("_diary_entry", "")
             question    = challenge.get("leseverstehen_question", "")
