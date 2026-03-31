@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Der Schatten von Walhall</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    :root {
+      --bg:        #0a0c12;
+      --bg2:       #0f1219;
+      --bg3:       #151820;
+      --panel:     #111318;
+      --border:    #1e2230;
+      --gold:      #c9a84c;
+      --gold2:     #e8c97a;
+      --gold-dim:  #6b5520;
+      --purple:    #7c4fc4;
+      --purple2:   #a374e8;
+      --blue:      #3d7abf;
+      --blue2:     #5fa0e8;
+      --red:       #c44040;
+      --red2:      #e86060;
+      --green:     #3aaf6e;
+      --green2:    #5ed48e;
+      --text:      #c8cdd8;
+      --text-dim:  #6b7080;
+      --text-gold: #e8c97a;
+      --white:     #f0f2f8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 16px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Atmospheric background ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(124,79,196,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 100%, rgba(61,122,191,0.05) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.02) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Typography ── */
+    .cinzel { font-family: 'Cinzel', serif; }
+
+    /* ── Layout ── */
+    #root { position: relative; z-index: 1; }
+
+    .screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+
+    /* ── Top Bar ── */
+    .top-bar {
+      background: linear-gradient(180deg, #0d1018 0%, var(--bg2) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .player-name {
+      font-family: 'Cinzel', serif;
+      color: var(--gold2);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .top-bar-sep { color: var(--border); font-size: 12px; }
+
+    .top-stat {
+      font-size: 13px;
+      color: var(--text-dim);
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    .top-stat span { color: var(--text); }
+
+    .mana-val { color: var(--purple2); }
+    .gold-val { color: var(--gold); }
+    .streak-val { color: #e86020; }
+    .level-val { color: var(--blue2); }
+
+    /* ── Panels ── */
+    .main-layout {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 8px;
+      padding: 14px;
+      position: relative;
+    }
+
+    .panel-title {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .panel-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--gold-dim), transparent);
+    }
+
+    /* ── XP Bar ── */
+    .xp-section { margin-bottom: 12px; }
+
+    .xp-label {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+
+    .bar-track {
+      height: 6px;
+      background: var(--bg3);
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .bar-gold { background: linear-gradient(90deg, var(--gold-dim), var(--gold)); }
+    .bar-blue { background: linear-gradient(90deg, #1e4a7a, var(--blue2)); }
+    .bar-purple { background: linear-gradient(90deg, #3d1f7a, var(--purple2)); }
+    .bar-green { background: linear-gradient(90deg, #1a5a38, var(--green2)); }
+    .bar-mana { background: linear-gradient(90deg, #2d1a5a, var(--purple2)); }
+
+    .skill-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .skill-label {
+      font-size: 12px; color: var(--text-dim);
+      width: 76px; flex-shrink: 0;
+    }
+
+    .skill-bar { flex: 1; }
+    .skill-bar .bar-track { height: 4px; }
+
+    /* ── Story Panel ── */
+    .narration-text {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text);
+      font-style: italic;
+    }
+
+    /* ── Challenge Panel ── */
+    .challenge-box {
+      background: var(--bg3);
+      border: 1px solid var(--purple);
+      border-radius: 4px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .challenge-prompt {
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--white);
+    }
+
+    .mc-option {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 15px;
+      color: var(--text);
+      text-align: left;
+      width: 100%;
+    }
+
+    .mc-option:hover, .mc-option:active {
+      border-color: var(--purple);
+      background: rgba(124,79,196,0.1);
+      color: var(--white);
+    }
+
+    .mc-num {
+      font-family: 'Cinzel', serif;
+      color: var(--gold);
+      font-size: 13px;
+      min-width: 18px;
+      padding-top: 1px;
+    }
+
+    /* ── Input ── */
+    .input-area {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .answer-input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--white);
+      font-family: 'Crimson Pro', serif;
+      font-size: 16px;
+      padding: 12px 14px;
+      width: 100%;
+      transition: border-color 0.2s;
+      outline: none;
+      resize: none;
+    }
+
+    .answer-input:focus { border-color: var(--purple); }
+    .answer-input::placeholder { color: var(--text-dim); font-style: italic; }
+
+    .submit-btn {
+      background: linear-gradient(135deg, var(--purple) 0%, #5c3a9e 100%);
+      border: none;
+      border-radius: 4px;
+      color: var(--white);
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .submit-btn:hover { background: linear-gradient(135deg, #8f5fd4 0%, #6b4ab0 100%); }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Result Feedback ── */
+    .result-box {
+      padding: 12px 14px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .result-correct {
+      background: rgba(58,175,110,0.1);
+      border: 1px solid var(--green);
+      color: var(--green2);
+    }
+
+    .result-wrong {
+      background: rgba(196,64,64,0.1);
+      border: 1px solid var(--red);
+      color: var(--red2);
+    }
+
+    .result-icon { font-size: 18px; margin-right: 6px; }
+    .result-explanation { color: var(--text); font-size: 14px; margin-top: 6px; }
+
+    /* ── Command Bar ── */
+    .cmd-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 16px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      position: sticky; bottom: 0; z-index: 100;
+    }
+
+    .cmd-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--purple2);
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      padding: 5px 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .cmd-btn:hover { border-color: var(--purple); background: rgba(124,79,196,0.1); }
+    .cmd-btn.disabled { color: var(--text-dim); cursor: not-allowed; }
+    .cmd-hint { color: var(--text-dim); font-size: 10px; }
+
+    /* ── Inventory ── */
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .inv-item {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px 6px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .inv-item:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+    .inv-icon { font-size: 18px; display: block; margin-bottom: 3px; }
+
+    /* ── Modal / Overlay ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex; align-items: flex-end;
+      z-index: 200;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px 12px 0 0;
+      padding: 20px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-title {
+      font-family: 'Cinzel', serif;
+      color: var(--gold2);
+      font-size: 15px;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+    }
+
+    .modal-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    .modal-close {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      padding: 10px 20px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 14px;
+    }
+
+    /* ── Welcome Screen ── */
+    .welcome-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .game-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(22px, 6vw, 36px);
+      font-weight: 900;
+      color: var(--gold2);
+      letter-spacing: 0.05em;
+      line-height: 1.2;
+      margin-bottom: 6px;
+      text-shadow: 0 0 40px rgba(201,168,76,0.3);
+    }
+
+    .game-subtitle {
+      font-family: 'Crimson Pro', serif;
+      font-style: italic;
+      font-size: 15px;
+      color: var(--text-dim);
+      margin-bottom: 32px;
+      letter-spacing: 0.08em;
+    }
+
+    .rune-divider {
+      color: var(--gold-dim);
+      font-size: 18px;
+      letter-spacing: 0.4em;
+      margin: 16px 0;
+    }
+
+    .name-input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-bottom: 2px solid var(--gold-dim);
+      border-radius: 4px 4px 0 0;
+      color: var(--white);
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      padding: 14px 16px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      letter-spacing: 0.1em;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 16px;
+    }
+
+    .name-input:focus { border-bottom-color: var(--gold); }
+    .name-input::placeholder { color: var(--text-dim); font-size: 14px; font-family: 'Crimson Pro', serif; font-style: italic; }
+
+    .level-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+      max-width: 340px;
+      margin-bottom: 20px;
+    }
+
+    .level-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      padding: 10px 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .level-btn:hover, .level-btn.active {
+      border-color: var(--gold);
+      color: var(--gold2);
+      background: rgba(201,168,76,0.08);
+    }
+
+    .level-btn small {
+      display: block;
+      font-family: 'Crimson Pro', serif;
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 2px;
+      font-style: italic;
+    }
+
+    .start-btn {
+      background: linear-gradient(135deg, var(--gold-dim) 0%, #8a6420 100%);
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+      color: var(--bg);
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      padding: 14px 32px;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      max-width: 340px;
+    }
+
+    .start-btn:hover {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 100%);
+    }
+
+    /* ── Chapter title ── */
+    .chapter-header {
+      text-align: center;
+      padding: 12px 0 4px;
+    }
+
+    .chapter-num {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .chapter-title-text {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      color: var(--gold2);
+      letter-spacing: 0.05em;
+      margin-top: 4px;
+    }
+
+    /* ── Score bars for langtext ── */
+    .score-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .score-item { }
+    .score-label { font-size: 11px; color: var(--text-dim); margin-bottom: 3px; }
+
+    .score-dots {
+      display: flex; gap: 3px;
+    }
+
+    .score-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+    }
+
+    .dot-filled-green { background: var(--green); border-color: var(--green2); }
+    .dot-filled-gold  { background: var(--gold);  border-color: var(--gold2); }
+    .dot-filled-red   { background: var(--red);   border-color: var(--red2); }
+
+    /* ── Loading ── */
+    .loading-text {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 20px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    /* ── Flashcard ── */
+    .flashcard {
+      background: var(--bg3);
+      border: 1px solid var(--gold-dim);
+      border-radius: 8px;
+      padding: 24px 16px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .flashcard-english {
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    .flashcard-example {
+      font-size: 13px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .fc-progress {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    /* ── Epilogue ── */
+    .epilogue-screen {
+      padding: 24px 16px;
+      text-align: center;
+    }
+
+    .epilogue-seal {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      color: var(--gold2);
+      padding: 12px 20px;
+      border: 1px solid var(--gold-dim);
+      border-radius: 4px;
+      display: inline-block;
+      margin: 16px 0;
+    }
+
+    .continue-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      padding: 12px 24px;
+      cursor: pointer;
+      margin-top: 16px;
+      width: 100%;
+    }
+
+    .scroll-input {
+      display: flex; gap: 8px; margin-bottom: 10px;
+    }
+
+    .scroll-input input {
+      flex: 1;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--white);
+      font-family: 'Crimson Pro', serif;
+      font-size: 16px;
+      padding: 10px 12px;
+      outline: none;
+    }
+
+    .scroll-input input:focus { border-color: var(--gold); }
+
+    .scroll-lookup-btn {
+      background: linear-gradient(135deg, var(--gold-dim), #6b5018);
+      border: 1px solid var(--gold-dim);
+      border-radius: 4px;
+      color: var(--bg);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    /* ── Accordion stats (mobile) ── */
+    .stats-toggle {
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; user-select: none;
+    }
+
+    .xp-inline {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--text-dim);
+    }
+
+    .xp-inline .bar-track { width: 80px; }
+
+    /* ── Item icons map ── */
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const API = "https://walhall-rpg-production.up.railway.app";
+
+const ITEM_ICONS = {
+  "Schwert": "⚔️", "Stab": "🪄", "Bogen": "🏹",
+  "Runentafel": "🪨", "Offenbarungsstein": "💎",
+  "Glückswürfel": "🎲", "Ältere Schriftrolle": "📜",
+  "Grammatikrolle": "📋", "Runenstein": "🔮",
+  "Wotan's Auge": "👁️", "Dämmerklinge": "✨",
+};
+
+const CEFR_OPTIONS = [
+  { code: "A1", label: "A1", desc: "Absolute Anfänger" },
+  { code: "A2", label: "A2", desc: "Grundkenntnisse" },
+  { code: "B1", label: "B1", desc: "Mittelstufe" },
+  { code: "B2", label: "B2", desc: "Obere Mittelstufe" },
+  { code: "C1", label: "C1", desc: "Fortgeschritten" },
+];
+
+// ── API helpers ────────────────────────────────────────────────
+async function api(path, method = "GET", body = null) {
+  const opts = { method, headers: { "Content-Type": "application/json" } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  return res.json();
+}
+
+// ── Top Bar ───────────────────────────────────────────────────
+function TopBar({ state }) {
+  if (!state) return null;
+  const cefr = ["A1","A2","B1","B2","C1"].includes(state.cefr_preference)
+    ? state.cefr_preference : "B2";
+  return (
+    <div className="top-bar">
+      <span className="player-name cinzel">⚔ {state.player_name}</span>
+      <span className="top-stat">
+        <span className="level-val cinzel">Lvl {state.level}</span>
+        <span style={{color:"var(--text-dim)",fontSize:11}}>({cefr})</span>
+      </span>
+      <span className="top-stat">
+        💠 <span className="mana-val">{state.mana}</span>
+        <span style={{color:"var(--text-dim)"}}>/{state.mana_max}</span>
+      </span>
+      <span className="top-stat">🔥 <span className="streak-val">{state.streak}d</span></span>
+      <span className="top-stat">🪙 <span className="gold-val">{state.gold}</span></span>
+    </div>
+  );
+}
+
+// ── Stats Panel ───────────────────────────────────────────────
+function StatsPanel({ state }) {
+  const [open, setOpen] = useState(false);
+  if (!state) return null;
+  const xpPct = Math.min(100, Math.round((state.xp / Math.max(state.xp_to_next,1)) * 100));
+
+  return (
+    <div className="panel">
+      <div className="stats-toggle" onClick={() => setOpen(!open)}>
+        <div className="panel-title" style={{marginBottom:0}}>⚡ Fortschritt</div>
+        <div className="xp-inline">
+          <div className="bar-track" style={{width:70}}>
+            <div className="bar-fill bar-gold" style={{width:`${xpPct}%`}} />
+          </div>
+          <span style={{fontSize:11,color:"var(--text-dim)"}}>{state.xp}/{state.xp_to_next}</span>
+          <span style={{color:"var(--text-dim)",fontSize:14}}>{open?"▲":"▼"}</span>
+        </div>
+      </div>
+
+      {open && (
+        <div style={{marginTop:12}}>
+          <div className="xp-section">
+            <div className="xp-label">
+              <span>XP</span>
+              <span>{state.xp} / {state.xp_to_next}</span>
+            </div>
+            <div className="bar-track">
+              <div className="bar-fill bar-gold" style={{width:`${xpPct}%`}} />
+            </div>
+          </div>
+
+          <div className="xp-label" style={{marginBottom:6}}>
+            <span>Genauigkeit</span>
+            <span style={{color:"var(--green2)"}}>{state.accuracy_pct}%</span>
+          </div>
+
+          {[
+            ["Wortschatz", state.skills?.vocabulary||0, "bar-blue"],
+            ["Grammatik",  state.skills?.grammar||0,    "bar-purple"],
+            ["Schreiben",  state.skills?.writing||0,    "bar-green"],
+          ].map(([label, val, cls]) => (
+            <div key={label} className="skill-row">
+              <span className="skill-label">{label}</span>
+              <div className="skill-bar bar-track">
+                <div className={`bar-fill ${cls}`}
+                  style={{width:`${Math.min(100,val)}%`}} />
+              </div>
+            </div>
+          ))}
+
+          {state.mana !== undefined && (
+            <div className="skill-row" style={{marginTop:4}}>
+              <span className="skill-label" style={{color:"var(--purple2)"}}>Mana</span>
+              <div className="skill-bar bar-track">
+                <div className="bar-fill bar-mana"
+                  style={{width:`${Math.round(state.mana/state.mana_max*100)}%`}} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Inventory Panel ───────────────────────────────────────────
+function InventoryPanel({ state, onItemClick }) {
+  if (!state || !state.inventory?.length) return null;
+  return (
+    <div className="panel">
+      <div className="panel-title">🗡 Inventar</div>
+      <div className="inventory-grid">
+        {state.inventory.map(item => (
+          <div key={item} className="inv-item" onClick={() => onItemClick(item)}
+               title={item}>
+            <span className="inv-icon">{ITEM_ICONS[item] || "📦"}</span>
+            <span style={{fontSize:9,letterSpacing:"0.03em"}}>{item}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Modal ─────────────────────────────────────────────────────
+function Modal({ title, content, onClose, extra }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-title">{title}</div>
+        {extra}
+        <div className="modal-text">{content}</div>
+        <button className="modal-close cinzel" onClick={onClose}>SCHLIESSEN</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Score Dots (langtext) ─────────────────────────────────────
+function ScoreDots({ score }) {
+  return (
+    <div className="score-dots">
+      {[1,2,3,4,5].map(i => {
+        const cls = i <= score
+          ? score >= 4 ? "dot-filled-green"
+          : score >= 3 ? "dot-filled-gold"
+          : "dot-filled-red"
+          : "";
+        return <div key={i} className={`score-dot ${cls}`} />;
+      })}
+    </div>
+  );
+}
+
+// ── Welcome Screen ────────────────────────────────────────────
+function WelcomeScreen({ onStart }) {
+  const [name, setName] = useState("");
+  const [cefr, setCefr] = useState("B2");
+  const [loading, setLoading] = useState(false);
+
+  async function handleStart() {
+    if (!name.trim()) return;
+    setLoading(true);
+    try {
+      const res = await api("/api/new-game", "POST", {
+        player_name: name.trim(),
+        cefr_preference: cefr,
+      });
+      onStart(res.state);
+    } catch(e) {
+      alert("Verbindungsfehler. Bitte versuche es erneut.");
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div className="welcome-screen">
+      <div className="game-title">DER SCHATTEN<br/>VON WALHALL</div>
+      <div className="game-subtitle">Ein deutsches Lern-Rollenspiel</div>
+      <div className="rune-divider">ᚠ ᚢ ᚦ ᚨ ᚱ</div>
+
+      <p style={{color:"var(--text-dim)",fontSize:14,fontStyle:"italic",
+                 marginBottom:24,maxWidth:300,lineHeight:1.6}}>
+        "Wie lautet dein Name, Krieger?"
+      </p>
+
+      <input
+        className="name-input"
+        placeholder="Dein Name..."
+        value={name}
+        onChange={e => setName(e.target.value)}
+        onKeyDown={e => e.key === "Enter" && handleStart()}
+        maxLength={20}
+      />
+
+      <p style={{color:"var(--text-dim)",fontSize:12,marginBottom:10,
+                 letterSpacing:"0.1em",fontFamily:"Cinzel,serif",
+                 textTransform:"uppercase"}}>
+        Sprachniveau
+      </p>
+
+      <div className="level-grid">
+        {CEFR_OPTIONS.map(opt => (
+          <button key={opt.code}
+            className={`level-btn cinzel ${cefr===opt.code?"active":""}`}
+            onClick={() => setCefr(opt.code)}>
+            {opt.label}
+            <small>{opt.desc}</small>
+          </button>
+        ))}
+      </div>
+
+      <button className="start-btn cinzel" onClick={handleStart} disabled={!name.trim()||loading}>
+        {loading ? "WIRD GELADEN..." : "DAS ABENTEUER BEGINNT"}
+      </button>
+    </div>
+  );
+}
+
+// ── Flashcard Round ───────────────────────────────────────────
+function FlashcardRound({ state, chapterInfo, onComplete, onStateUpdate }) {
+  const [cards, setCards] = useState([]);
+  const [idx, setIdx] = useState(0);
+  const [answer, setAnswer] = useState("");
+  const [result, setResult] = useState(null);
+  const [correct, setCorrect] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [done, setDone] = useState(false);
+  const [manaGained, setManaGained] = useState(0);
+
+  useEffect(() => {
+    api("/api/flashcards/generate", "POST", {
+      episode: state.episode, act: state.act, chapter: state.chapter
+    }).then(r => { setCards(r.cards||[]); setLoading(false); });
+  }, []);
+
+  async function submit() {
+    if (!answer.trim()) return;
+    const card = cards[idx];
+    setLoading(true);
+    const r = await api("/api/flashcards/evaluate", "POST", {
+      german: card.german, english: card.english, player_answer: answer.trim()
+    });
+    setResult(r);
+    if (r.correct) setCorrect(c => c+1);
+    setLoading(false);
+  }
+
+  async function next() {
+    if (idx + 1 >= cards.length) {
+      // Complete round
+      const total = cards.length;
+      const r = await api("/api/flashcards/complete", "POST", {correct, total});
+      setManaGained(r.mana_gained);
+      onStateUpdate(r.state);
+      setDone(true);
+    } else {
+      setIdx(i => i+1);
+      setAnswer("");
+      setResult(null);
+    }
+  }
+
+  if (loading && cards.length === 0) return (
+    <div className="panel">
+      <div className="loading-text cinzel">RUNEN ERWACHEN...</div>
+    </div>
+  );
+
+  if (done) return (
+    <div className="panel">
+      <div className="panel-title">✦ Runentafel Abgeschlossen</div>
+      <div style={{textAlign:"center",padding:"16px 0"}}>
+        <div style={{fontSize:32,marginBottom:8}}>🪨</div>
+        <div className="cinzel" style={{color:"var(--gold2)",fontSize:16,marginBottom:4}}>
+          {correct}/{cards.length} Korrekt
+        </div>
+        <div style={{color:"var(--purple2)",fontSize:14,marginBottom:4}}>
+          +{manaGained} Mana restauriert
+        </div>
+        {correct === cards.length &&
+          <div style={{color:"var(--green2)",fontSize:13}}>✦ Perfekte Runde!</div>}
+        <button className="continue-btn cinzel" onClick={onComplete}
+                style={{marginTop:16}}>
+          ZURÜCK ZUM SPIEL
+        </button>
+      </div>
+    </div>
+  );
+
+  if (cards.length === 0) return null;
+  const card = cards[idx];
+
+  return (
+    <div className="panel">
+      <div className="fc-progress cinzel">KARTE {idx+1} / {cards.length}</div>
+      <div className="flashcard">
+        <div className="flashcard-english">{card.english}</div>
+        <div className="flashcard-example">{card.example}</div>
+      </div>
+
+      {result && (
+        <div className={`result-box ${result.correct?"result-correct":"result-wrong"}`}>
+          <span className="result-icon">{result.correct?"✔":"✖"}</span>
+          {result.correct ? "Richtig!" : `Richtig wäre: ${card.german}`}
+          {result.feedback && <div className="result-explanation">{result.feedback}</div>}
+        </div>
+      )}
+
+      {!result ? (
+        <div className="input-area">
+          <input className="answer-input"
+            placeholder="Auf Deutsch..."
+            value={answer}
+            onChange={e => setAnswer(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && submit()}
+            disabled={loading}
+            autoFocus />
+          <button className="submit-btn" onClick={submit} disabled={loading||!answer.trim()}>
+            {loading ? "..." : "ANTWORTEN"}
+          </button>
+        </div>
+      ) : (
+        <button className="submit-btn" onClick={next}
+          style={{background:"linear-gradient(135deg,var(--blue),#2a5a9e)"}}>
+          {idx+1 >= cards.length ? "ABSCHLIESSEN" : "NÄCHSTE KARTE"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Main Game Screen ──────────────────────────────────────────
+function GameScreen({ initialState }) {
+  const [state, setState] = useState(initialState);
+  const [chapter, setChapter] = useState(null);
+  const [narration, setNarration] = useState("");
+  const [diary, setDiary] = useState("");
+  const [challenges, setChallenges] = useState([]);
+  const [chalIdx, setChalIdx] = useState(0);
+  const [answer, setAnswer] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState("loading"); // loading|narration|challenge|flashcard|epilogue
+  const [modal, setModal] = useState(null);
+  const [scrollWord, setScrollWord] = useState("");
+  const [epilogue, setEpilogue] = useState(null);
+  const inputRef = useRef(null);
+
+  // Load chapter on mount and after chapter changes
+  useEffect(() => {
+    loadChapter(state.episode, state.act, state.chapter);
+  }, [state.episode, state.act, state.chapter]);
+
+  async function loadChapter(ep, act, ch) {
+    setPhase("loading");
+    try {
+      const r = await api(`/api/chapter/${ep}/${act}/${ch}`);
+      if (!r.exists) {
+        setPhase("act-end");
+        return;
+      }
+      setChapter(r.chapter);
+      setNarration(r.narration || "");
+      setDiary(r.diary || "");
+      const chals = r.chapter.challenges || [];
+      // Inject diary into leseverstehen
+      const injected = chals.map(c =>
+        c.type === "leseverstehen" ? {...c, _diary_entry: r.diary} : c
+      );
+      setChallenges(injected);
+      setChalIdx(0);
+      setResult(null);
+      setAnswer("");
+      setPhase("narration");
+    } catch(e) {
+      setPhase("error");
+    }
+  }
+
+  async function submitAnswer() {
+    if (!answer.trim() || loading) return;
+    const chal = challenges[chalIdx];
+    setLoading(true);
+
+    // Word count check for langtext
+    if (chal.type === "langtext") {
+      const wc = answer.trim().split(/\s+/).length;
+      if (wc < (chal.min_words || 50)) {
+        setResult({
+          correct: false,
+          explanation: `Zu kurz — ${wc} Wörter. Mindestens ${chal.min_words} benötigt.`,
+        });
+        setLoading(false);
+        return;
+      }
+    }
+
+    try {
+      const r = await api("/api/answer", "POST", {
+        challenge_id:          chal.id || "",
+        challenge_type:        chal.type || "dialogantwort",
+        prompt_en:             chal.prompt_en || chal.prompt_de || "",
+        player_answer:         answer.trim(),
+        grammar_focus:         chal.grammar_focus || "",
+        min_words:             chal.min_words || 0,
+        diary_entry:           chal._diary_entry || "",
+        leseverstehen_question: chal.leseverstehen_question || "",
+      });
+
+      setState(r.state);
+      setResult(r);
+
+      if (r.correct) {
+        // Handle item reward
+        if (chal.item_reward && !r.state.inventory.includes(chal.item_reward)) {
+          setTimeout(() => {
+            setModal({
+              title: `🗡 Neuer Gegenstand!`,
+              content: `${ITEM_ICONS[chal.item_reward]||"📦"} ${chal.item_reward}`,
+            });
+          }, 1200);
+        }
+      }
+    } catch(e) {
+      setResult({ correct: false, explanation: "Verbindungsfehler." });
+    }
+    setLoading(false);
+  }
+
+  async function advanceChallenge() {
+    if (!result?.correct) {
+      setResult(null);
+      setAnswer("");
+      return;
+    }
+
+    const next = chalIdx + 1;
+    if (next < challenges.length) {
+      setChalIdx(next);
+      setResult(null);
+      setAnswer("");
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      // Complete chapter
+      await completeChapter();
+    }
+  }
+
+  async function completeChapter() {
+    setLoading(true);
+    const lastAnswer = answer;
+    try {
+      const r = await api("/api/complete-chapter", "POST", {
+        completion_xp:  chapter.completion_xp || 50,
+        next_chapter:   chapter.unlocks_chapter || null,
+        next_act:       chapter.unlocks_chapter ? state.act : null,
+        chapter:        chapter.chapter,
+        ending_answer:  lastAnswer,
+      });
+      setState(r.state);
+      if (r.epilogue) {
+        setEpilogue(r);
+        setPhase("epilogue");
+      } else if (!chapter.unlocks_chapter) {
+        setPhase("act-end");
+      } else {
+        // Load next chapter
+        loadChapter(r.state.episode, r.state.act, r.state.chapter);
+      }
+    } catch(e) {
+      setPhase("act-end");
+    }
+    setLoading(false);
+  }
+
+  // ── Commands ────────────────────────────────────────────────
+  async function handleCommand(cmd) {
+    const chal = challenges[chalIdx];
+    setLoading(true);
+    try {
+      if (cmd === "/stein") {
+        const r = await api("/api/command", "POST", {
+          command: "/stein",
+          prompt_en: chal?.prompt_en || chal?.prompt_de || "",
+        });
+        setState(r.state || state);
+        setModal({
+          title: `💎 Offenbarungsstein (${r.hints_remaining} verbleibend)`,
+          content: r.result || r.message,
+        });
+      }
+      else if (cmd === "/würfeln") {
+        const r = await api("/api/command", "POST", { command: "/würfeln" });
+        setState(r.state || state);
+        setModal({
+          title: "🎲 Glückswürfel",
+          content: r.won
+            ? "✦ Glück! Deine nächste korrekte Antwort bringt doppelte XP!"
+            : "✖ Pech! Die Würfel wenden sich gegen dich. -15 Mana.",
+        });
+      }
+      else if (cmd === "/diary") {
+        const r = await api("/api/diary");
+        setModal({ title: "📖 Grimnirs Tagebuch", content: r.entries });
+      }
+      else if (cmd === "/translate") {
+        const r = await api("/api/command", "POST", { command: "/translate" });
+        setState(r.state || state);
+        if (r.success) {
+          setModal({
+            title: "Übersetzung",
+            content: chal?.prompt_de || "Keine deutsche Version verfügbar.",
+          });
+        } else {
+          setModal({ title: "Mana", content: r.message });
+        }
+      }
+      else if (cmd === "/erkläre") {
+        const r = await api("/api/command", "POST", {
+          command: "/erkläre",
+          grammar_focus:  chal?.grammar_focus || "",
+          example_answer: chal?.example_answer || chal?.correct_de || "",
+        });
+        setState(r.state || state);
+        setModal({
+          title: "📋 Brunhilde erklärt",
+          content: r.result || r.message,
+        });
+      }
+      else if (cmd === "/scroll") {
+        setModal({
+          title: "📜 Ältere Schriftrolle",
+          content: "",
+          isScroll: true,
+        });
+      }
+      else if (cmd === "/runen") {
+        setPhase("flashcard");
+      }
+      else if (cmd === "/level") {
+        setModal({ title: "Sprachniveau", content: "", isLevel: true });
+      }
+    } catch(e) {
+      setModal({ title: "Fehler", content: "Verbindungsfehler." });
+    }
+    setLoading(false);
+  }
+
+  async function scrollLookup() {
+    if (!scrollWord.trim()) return;
+    setLoading(true);
+    const r = await api("/api/command", "POST", {
+      command: "/scroll", word: scrollWord.trim()
+    });
+    setLoading(false);
+    setModal({
+      title: `📜 ${scrollWord}`,
+      content: r.result || r.message,
+    });
+    setScrollWord("");
+  }
+
+  async function changeLevel(newCefr) {
+    const r = await api("/api/set-level", "POST", { cefr: newCefr });
+    setState(r.state);
+    setModal(null);
+  }
+
+  const chal = challenges[chalIdx];
+  const hintsLeft = state.hints_per_chapter - (state.chapter_hints_used || 0);
+  const hasDice   = state.inventory?.includes("Glückswürfel");
+  const hasScroll = state.inventory?.includes("Ältere Schriftrolle");
+  const hasRunen  = state.inventory?.includes("Runentafel");
+
+  // ── RENDER ──────────────────────────────────────────────────
+
+  if (phase === "loading") return (
+    <div className="screen">
+      <TopBar state={state} />
+      <div className="loading-text cinzel" style={{marginTop:40}}>
+        BRUNHILDE BEREITET DIE GESCHICHTE VOR...
+      </div>
+    </div>
+  );
+
+  if (phase === "act-end") return (
+    <div className="screen">
+      <TopBar state={state} />
+      <div style={{padding:24,textAlign:"center"}}>
+        <div style={{fontSize:32,marginBottom:12}}>⚔️</div>
+        <div className="cinzel" style={{color:"var(--gold2)",fontSize:18,marginBottom:8}}>
+          Akt abgeschlossen
+        </div>
+        <div style={{color:"var(--text-dim)",fontSize:15,fontStyle:"italic"}}>
+          Fortsetzung folgt...
+        </div>
+        <div style={{color:"var(--text-dim)",fontSize:13,marginTop:24}}>
+          Die nächsten Kapitel werden bald verfügbar sein.
+        </div>
+      </div>
+    </div>
+  );
+
+  if (phase === "epilogue" && epilogue) return (
+    <div className="screen">
+      <TopBar state={state} />
+      <div className="epilogue-screen">
+        <div className="rune-divider">ᚠ ᚢ ᚦ ᚨ ᚱ</div>
+        <div className="cinzel" style={{color:"var(--gold2)",fontSize:18,marginBottom:4}}>
+          EPISODE I — ABGESCHLOSSEN
+        </div>
+        <div className="epilogue-seal cinzel">
+          {epilogue.ending === "vergebung" ? "🌿 VERGEBUNG" : "⚔️ RACHE"}
+        </div>
+        <div style={{
+          background:"var(--panel)",border:"1px solid var(--gold-dim)",
+          borderRadius:4,padding:16,textAlign:"left",
+          fontSize:15,lineHeight:1.7,color:"var(--text)",
+          fontStyle:"italic",marginBottom:16,
+        }}>
+          {epilogue.epilogue}
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:6,
+                     fontSize:13,color:"var(--text-dim)"}}>
+          <span>Level {state.level}  ·  Genauigkeit {state.accuracy_pct}%</span>
+          <span>Streak: {state.streak} Tage</span>
+          <span>Inventar: {state.inventory?.join(", ")||"—"}</span>
+        </div>
+        <div className="cinzel" style={{
+          color:"var(--gold2)",fontSize:11,letterSpacing:"0.15em",
+          marginTop:20,fontStyle:"italic"
+        }}>
+          ✦ EPISODE I COMPLETE ✦
+        </div>
+      </div>
+    </div>
+  );
+
+  if (phase === "flashcard") return (
+    <div className="screen">
+      <TopBar state={state} />
+      <StatsPanel state={state} />
+      <FlashcardRound
+        state={state}
+        chapterInfo={chapter}
+        onComplete={() => setPhase("challenge")}
+        onStateUpdate={newState => setState(newState)}
+      />
+      <div className="cmd-bar">
+        <button className="cmd-btn cinzel" onClick={() => setPhase("challenge")}>
+          ← ZURÜCK
+        </button>
+      </div>
+    </div>
+  );
+
+  if (phase === "narration") return (
+    <div className="screen">
+      <TopBar state={state} />
+      <StatsPanel state={state} />
+
+      {chapter && (
+        <div className="chapter-header">
+          <div className="chapter-num cinzel">KAPITEL {chapter.chapter}</div>
+          <div className="chapter-title-text">{chapter.title}</div>
+        </div>
+      )}
+
+      <div className="panel">
+        <div className="panel-title">📖 Die Geschichte</div>
+        <div className="narration-text">{narration}</div>
+      </div>
+
+      <InventoryPanel state={state} onItemClick={item =>
+        setModal({ title: `${ITEM_ICONS[item]||"📦"} ${item}`, content: "" })} />
+
+      <div className="cmd-bar">
+        <button className="submit-btn cinzel"
+          style={{margin:"8px 16px",width:"calc(100% - 32px)"}}
+          onClick={() => setPhase("challenge")}>
+          HERAUSFORDERUNG BEGINNEN →
+        </button>
+      </div>
+    </div>
+  );
+
+  // Challenge phase
+  return (
+    <div className="screen">
+      <TopBar state={state} />
+      <StatsPanel state={state} />
+
+      {result && (
+        <div className="panel" style={{paddingBottom:8}}>
+          {result.correct ? (
+            <div className="result-box result-correct">
+              <span className="result-icon">✔</span>
+              Richtig! +{result.xp_gained||0} XP
+              {result.levelled_up && (
+                <div style={{color:"var(--gold2)",marginTop:4}}>
+                  🎉 LEVEL UP! Level {state.level}!
+                </div>
+              )}
+              <div className="result-explanation">{result.explanation}</div>
+            </div>
+          ) : (
+            <div className="result-box result-wrong">
+              <span className="result-icon">✖</span>
+              Falsch.
+              <div className="result-explanation">{result.explanation}</div>
+            </div>
+          )}
+
+          {/* Langtext scores */}
+          {chal?.type === "langtext" && result.grammar_score && (
+            <div className="score-grid" style={{marginTop:10}}>
+              {[
+                ["Grammatik",  result.grammar_score],
+                ["Wortschatz", result.vocabulary_score],
+                ["Kohärenz",   result.coherence_score],
+                ["Aufgabe",    result.task_score],
+              ].map(([label, score]) => (
+                <div key={label} className="score-item">
+                  <div className="score-label">{label}</div>
+                  <ScoreDots score={score} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {result.best_sentence && (
+            <div style={{fontSize:13,color:"var(--gold)",marginTop:6,fontStyle:"italic"}}>
+              ✦ "{result.best_sentence}"
+            </div>
+          )}
+
+          <button className="submit-btn" onClick={advanceChallenge}
+            style={{marginTop:10,
+              background: result.correct
+                ? "linear-gradient(135deg,var(--green),#2a8a52)"
+                : "linear-gradient(135deg,var(--red),#8a2020)"}}>
+            {result.correct
+              ? (chalIdx+1 < challenges.length ? "WEITER →" : "KAPITEL ABSCHLIESSEN")
+              : "NOCHMAL VERSUCHEN"}
+          </button>
+        </div>
+      )}
+
+      {!result && chal && (
+        <div className="panel">
+          <div className="panel-title">
+            ⚔ {chapter?.title} — {chalIdx+1}/{challenges.length}
+          </div>
+
+          {/* Diary entry for leseverstehen */}
+          {chal.type === "leseverstehen" && diary && (
+            <div style={{
+              background:"var(--bg3)",border:"1px solid var(--gold-dim)",
+              borderRadius:4,padding:12,marginBottom:10,
+              fontSize:14,lineHeight:1.6,fontStyle:"italic",color:"var(--text)",
+            }}>
+              <div className="cinzel" style={{fontSize:10,color:"var(--gold-dim)",
+                            marginBottom:6,letterSpacing:"0.1em"}}>
+                📖 TAGEBUCHEINTRAG
+              </div>
+              {diary}
+            </div>
+          )}
+
+          <div className="challenge-box">
+            <div className="challenge-prompt">{chal.prompt_en || chal.prompt_de}</div>
+          </div>
+
+          {/* Multiple choice */}
+          {chal.type === "multiple_choice" && chal.options?.map((opt, i) => (
+            <button key={i} className="mc-option"
+              onClick={() => setAnswer(opt)}>
+              <span className="mc-num">{i+1}</span>
+              <span>{opt}</span>
+            </button>
+          ))}
+
+          {/* Min words hint for langtext */}
+          {chal.type === "langtext" && (
+            <div style={{fontSize:12,color:"var(--text-dim)",marginBottom:8,fontStyle:"italic"}}>
+              Mindestens {chal.min_words} Wörter auf Deutsch
+            </div>
+          )}
+
+          <div className="input-area">
+            {chal.type === "langtext" ? (
+              <textarea
+                ref={inputRef}
+                className="answer-input"
+                placeholder="Schreibe deinen Text hier..."
+                value={answer}
+                onChange={e => setAnswer(e.target.value)}
+                rows={5}
+                disabled={loading}
+              />
+            ) : (
+              <input
+                ref={inputRef}
+                className="answer-input"
+                placeholder={
+                  chal.type === "multiple_choice"
+                    ? "Wähle eine Option oben..."
+                    : "Deine Antwort auf Deutsch..."
+                }
+                value={answer}
+                onChange={e => setAnswer(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && !loading && submitAnswer()}
+                disabled={loading}
+                autoFocus
+              />
+            )}
+
+            <button className="submit-btn" onClick={submitAnswer}
+              disabled={loading || !answer.trim()}>
+              {loading ? "BRUNHILDE BEWERTET..." : "ANTWORTEN ⚔"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <InventoryPanel state={state} onItemClick={item =>
+        setModal({ title: `${ITEM_ICONS[item]||"📦"} ${item}`, content: "" })} />
+
+      {/* Command Bar */}
+      <div className="cmd-bar">
+        <button className="cmd-btn cinzel" onClick={() => handleCommand("/stein")}
+          disabled={hintsLeft <= 0}>
+          💎 STEIN {hintsLeft > 0 ? `(${hintsLeft})` : "(0)"}
+        </button>
+        <button className="cmd-btn cinzel" onClick={() => handleCommand("/translate")}>
+          🔤 TRANSLATE
+        </button>
+        <button className="cmd-btn cinzel" onClick={() => handleCommand("/erkläre")}>
+          📋 ERKLÄRE
+        </button>
+        <button className="cmd-btn cinzel" onClick={() => handleCommand("/diary")}>
+          📖 DIARY
+        </button>
+        {hasDice && (
+          <button className="cmd-btn cinzel" onClick={() => handleCommand("/würfeln")}>
+            🎲 WÜRFELN
+          </button>
+        )}
+        {hasScroll && (
+          <button className="cmd-btn cinzel" onClick={() => handleCommand("/scroll")}>
+            📜 SCROLL
+          </button>
+        )}
+        {hasRunen && (
+          <button className="cmd-btn cinzel" onClick={() => handleCommand("/runen")}>
+            🪨 RUNEN
+          </button>
+        )}
+        <button className="cmd-btn cinzel" onClick={() => handleCommand("/level")}>
+          ⚡ NIVEAU
+        </button>
+      </div>
+
+      {/* Modals */}
+      {modal && !modal.isScroll && !modal.isLevel && (
+        <Modal
+          title={modal.title}
+          content={modal.content}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+      {modal?.isScroll && (
+        <div className="modal-overlay" onClick={() => setModal(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-title">📜 Ältere Schriftrolle</div>
+            <div className="scroll-input">
+              <input
+                placeholder="Deutsches Wort..."
+                value={scrollWord}
+                onChange={e => setScrollWord(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && scrollLookup()}
+                autoFocus
+              />
+              <button className="scroll-lookup-btn cinzel"
+                onClick={scrollLookup} disabled={loading}>
+                {loading ? "..." : "SUCHEN"}
+              </button>
+            </div>
+            <div style={{fontSize:12,color:"var(--text-dim)",fontStyle:"italic",marginBottom:8}}>
+              Definitionen werden nur auf Deutsch angezeigt.
+            </div>
+            <button className="modal-close cinzel" onClick={() => setModal(null)}>
+              SCHLIESSEN
+            </button>
+          </div>
+        </div>
+      )}
+
+      {modal?.isLevel && (
+        <div className="modal-overlay" onClick={() => setModal(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-title">⚡ Sprachniveau ändern</div>
+            <div className="level-grid" style={{maxWidth:"100%",marginBottom:10}}>
+              {CEFR_OPTIONS.map(opt => (
+                <button key={opt.code}
+                  className={`level-btn cinzel ${state.cefr_preference===opt.code?"active":""}`}
+                  onClick={() => changeLevel(opt.code)}>
+                  {opt.label}
+                  <small>{opt.desc}</small>
+                </button>
+              ))}
+            </div>
+            <button className="modal-close cinzel" onClick={() => setModal(null)}>
+              ABBRECHEN
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Root App ──────────────────────────────────────────────────
+function App() {
+  const [gameState, setGameState] = useState(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    api("/api/state").then(r => {
+      if (r.exists) setGameState(r.state);
+      setChecking(false);
+    }).catch(() => setChecking(false));
+
+    // Update streak
+    api("/api/streak", "POST").catch(() => {});
+  }, []);
+
+  if (checking) return (
+    <div style={{
+      minHeight:"100vh",display:"flex",
+      alignItems:"center",justifyContent:"center",
+      flexDirection:"column",gap:12
+    }}>
+      <div style={{fontSize:28}}>⚔️</div>
+      <div className="loading-text cinzel">DAS REICH ERWACHT...</div>
+    </div>
+  );
+
+  if (!gameState) return <WelcomeScreen onStart={setGameState} />;
+
+  return <GameScreen initialState={gameState} />;
+}
+
+ReactDOM.render(<App />, document.getElementById("root"));
+</script>
+</body>
+</html>
