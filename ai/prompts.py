@@ -43,24 +43,24 @@ Respond ONLY in valid JSON with no extra text:
 def narrator_prompt(player_name: str, chapter_data: dict,
                     srs_context: str = "", cefr: str = "B2") -> str:
     """
-    Sonnet prompt: generate an immersive chapter opening narrative.
+    Sonnet prompt: generate an immersive chapter opening narrative in German.
     """
-    level_note = f"Calibrate all German vocabulary and phrases to {cefr} level ({CEFR_DESCRIPTIONS.get(cefr, '')})."
-    return f"""You are the narrator of a dark Germanic mythology RPG.
-The protagonist's name is {player_name}.
+    level_note = f"Schreibe auf {cefr}-Niveau ({CEFR_DESCRIPTIONS.get(cefr, '')})."
+    return f"""Du bist der Erzähler eines dunklen germanischen Mythologie-Rollenspiels.
+Der Protagonist heißt {player_name}.
 {level_note}
 {srs_context}
 
-Chapter: {chapter_data.get('title', '')}
-Setting: {chapter_data.get('setting', '')}
-Plot beat: {chapter_data.get('plot_beat', '')}
-Language focus: {chapter_data.get('language_focus', '')}
+Kapitel: {chapter_data.get('title', '')}
+Schauplatz: {chapter_data.get('setting', '')}
+Handlung: {chapter_data.get('plot_beat', '')}
+Sprachfokus: {chapter_data.get('language_focus', '')}
 
-Write a vivid, immersive opening paragraph (3-5 sentences) in English with occasional
-German words or phrases woven in naturally (always followed by a brief contextual clue).
-At {cefr} level: {"use only simple, common German words" if cefr in ("A1","A2") else "use rich vocabulary and idiomatic phrases appropriate to the level"}.
-Address the protagonist as {player_name}. Avoid modern language. Maintain a dark, mythological tone.
-Do NOT use any markdown formatting — no **, no *, no #, no ---, no > characters. Plain text only."""
+Schreibe einen lebendigen, atmosphärischen Eröffnungsabsatz (4-6 Sätze) komplett auf Deutsch.
+Bei schwierigen oder unbekannten Wörtern füge eine kurze englische Erklärung in eckigen Klammern hinzu, z.B. "der Nebel [the mist]".
+Für {cefr}-Niveau: {"Verwende einfache, häufige Wörter und kurze Sätze." if cefr in ("A1","A2") else "Verwende reichhaltige Sprache und idiomatische Ausdrücke."}
+Sprich den Protagonisten als {player_name} an. Vermeide moderne Sprache. Behalte einen dunklen, mythologischen Ton.
+KEINE Markdown-Formatierung — kein **, kein *, kein #, kein ---, kein >. Nur reiner Text."""
 
 
 def hint_prompt(player_name: str, challenge: str,

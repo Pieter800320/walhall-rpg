@@ -1532,13 +1532,13 @@ function GameScreen({ initialState }) {
           💎 STEIN {hintsLeft > 0 ? `(${hintsLeft})` : "(0)"}
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/translate")}>
-          🔤 TRANSLATE
+          🔤 ÜBERSETZEN
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/erkläre")}>
-          📋 ERKLÄRE
+          📋 ERKLÄREN
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/diary")}>
-          📖 DIARY
+          📖 TAGEBUCH
         </button>
         {hasDice && (
           <button className="cmd-btn cinzel" onClick={() => handleCommand("/würfeln")}>
@@ -1547,7 +1547,7 @@ function GameScreen({ initialState }) {
         )}
         {hasScroll && (
           <button className="cmd-btn cinzel" onClick={() => handleCommand("/scroll")}>
-            📜 SCROLL
+            📜 SCHRIFTROLLE
           </button>
         )}
         {hasRunen && (
