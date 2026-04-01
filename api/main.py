@@ -383,7 +383,6 @@ def complete_chapter(body: dict):
         raise HTTPException(status_code=404, detail="No save state")
     completion_xp   = body.get("completion_xp", 50)
     next_chapter    = body.get("next_chapter")
-    next_act        = body.get("next_act", state.act)
     ending_answer   = body.get("ending_answer", "")
 
     xp_result = award_xp(state, completion_xp)
@@ -394,7 +393,12 @@ def complete_chapter(body: dict):
 
     if next_chapter:
         state.chapter = next_chapter
-        state.act = next_act
+        # Advance act when chapter crosses act boundaries
+        if next_chapter >= 4 and state.act == 1:
+            state.act = 2
+        elif next_chapter >= 8 and state.act == 2:
+            state.act = 3
+
     save_state(state)
 
     # Generate epilogue if episode complete

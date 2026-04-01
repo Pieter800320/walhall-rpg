@@ -1109,16 +1109,14 @@ function GameScreen({ initialState }) {
       setState(r.state);
       setResult(r);
 
-      if (r.correct) {
-        // Handle item reward
-        if (chal.item_reward && !r.state.inventory.includes(chal.item_reward)) {
-          setTimeout(() => {
-            setModal({
-              title: `🗡 Neuer Gegenstand!`,
-              content: `${ITEM_ICONS[chal.item_reward]||"📦"} ${chal.item_reward}`,
-            });
-          }, 1200);
-        }
+      if (r.correct && chal.item_reward) {
+        // Show item reward after a short delay
+        setTimeout(() => {
+          setModal({
+            title: `🗡 Neuer Gegenstand!`,
+            content: `${ITEM_ICONS[chal.item_reward]||"📦"} ${chal.item_reward}\n\n${chal.item_reward} wurde deinem Inventar hinzugefügt.`,
+          });
+        }, 800);
       }
     } catch(e) {
       setResult({ correct: false, explanation: "Verbindungsfehler." });
@@ -1163,7 +1161,7 @@ function GameScreen({ initialState }) {
       } else if (!chapter.unlocks_chapter) {
         setPhase("act-end");
       } else {
-        // Load next chapter
+        // Load next chapter using updated state (act may have changed)
         loadChapter(r.state.episode, r.state.act, r.state.chapter);
       }
     } catch(e) {

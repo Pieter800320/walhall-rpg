@@ -21,7 +21,7 @@ def evaluator_prompt(player_name: str, challenge: str, player_answer: str,
     Haiku prompt: evaluate a player's German answer.
     Returns JSON: { correct: bool, explanation: str, grammar_focus: str }
     """
-    level_note = f"The player's self-reported German level is {cefr} ({CEFR_DESCRIPTIONS.get(cefr, '')})."
+    level_note = f"The player's level is {cefr} ({CEFR_DESCRIPTIONS.get(cefr, '')})."
     return f"""You are a strict but encouraging German language evaluator in a fantasy RPG.
 The player's name is {player_name}. {level_note}
 {srs_context}
@@ -30,13 +30,11 @@ Challenge: {challenge}
 Player's answer: {player_answer}
 
 Evaluate whether the answer is grammatically correct and contextually appropriate.
-Calibrate your explanation to a {cefr} learner — don't over-explain basics to advanced players,
-and don't assume knowledge of complex grammar for beginners.
 Respond ONLY in valid JSON with no extra text:
 {{
   "correct": true or false,
-  "explanation": "brief explanation in English, max 2 sentences",
-  "grammar_focus": "the grammar rule this tests, e.g. Dativ case"
+  "explanation": "ONE short sentence in German — either praise or correction. Max 15 words. Example: 'Gut gemacht! Der Dativ ist korrekt.' or 'Falsch — benutze dem statt den nach helfen.'",
+  "grammar_focus": "the grammar rule tested, e.g. Dativ case"
 }}"""
 
 
@@ -168,25 +166,25 @@ If the word does not exist, say so briefly in German."""
 
 def diary_entry_prompt(player_name: str, chapter_data: dict, cefr: str = "B2") -> str:
     """
-    Sonnet prompt: generate a first-person diary entry for the current chapter.
-    Written as Grimnir reflecting on what just happened.
+    Sonnet prompt: generate a first-person diary entry in German.
     """
-    level_note = f"Write the German portions at {cefr} level ({CEFR_DESCRIPTIONS.get(cefr, '')})."
-    return f"""You are writing a diary entry for {player_name}, a warrior in a dark Germanic RPG.
+    level_note = f"Schreibe auf {cefr}-Niveau ({CEFR_DESCRIPTIONS.get(cefr, '')})."
+    return f"""Du schreibst einen Tagebucheintrag für {player_name}, einen Krieger in einem dunklen germanischen RPG.
 {level_note}
 
-The entry is written in first person, as {player_name} reflecting on the events of:
-Chapter: {chapter_data.get('title', '')}
-What happened: {chapter_data.get('plot_beat', '')}
-Setting: {chapter_data.get('setting', '')}
+Der Eintrag wird in der ersten Person geschrieben, als {player_name} über die Ereignisse nachdenkt:
+Kapitel: {chapter_data.get('title', '')}
+Was passierte: {chapter_data.get('plot_beat', '')}
+Schauplatz: {chapter_data.get('setting', '')}
 
-Write a short diary entry (4-6 sentences) that:
-- Starts with a date-like header in this format: "Tag {chapter_data.get('chapter', 1)} — {chapter_data.get('title', '')}"
-- Is written mostly in English but weaves in German words and phrases naturally
-- Captures the emotional tone — fear, determination, wonder, or dread as appropriate
-- Ends with one sentence of reflection or resolve
-- Uses NO markdown formatting — plain text only
-- Feels personal, like a real warrior's field journal"""
+Schreibe einen kurzen Tagebucheintrag (4-6 Sätze) der:
+- Mit einer Datumszeile beginnt: "Tag {chapter_data.get('chapter', 1)} — {chapter_data.get('title', '')}"
+- Komplett auf Deutsch geschrieben ist
+- Bei schwierigen Wörtern kurze englische Hinweise in eckigen Klammern enthält
+- Den emotionalen Ton einfängt — Angst, Entschlossenheit, Staunen
+- Mit einem Satz der Reflexion oder des Entschlusses endet
+- KEINE Markdown-Formatierung verwendet — nur reiner Text
+- Sich persönlich anfühlt, wie ein echtes Kriegstagebuch"""
 
 
 def leseverstehen_prompt(player_name: str, diary_entry: str,
