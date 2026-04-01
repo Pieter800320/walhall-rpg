@@ -16,6 +16,31 @@ client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
 
 
+def evaluate_satzbau(correct_de: str, player_answer: str, cefr: str = "B2") -> dict:
+    """Lenient evaluation for Satzbau challenges — checks meaning not exact match."""
+    from ai.prompts import satzbau_prompt
+    prompt = satzbau_prompt(correct_de, player_answer, cefr)
+    try:
+        response = client.messages.create(
+            model=HAIKU_MODEL,
+            max_tokens=150,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        result = json.loads(raw.strip())
+        return {
+            "correct":       bool(result.get("correct", False)),
+            "explanation":   result.get("explanation", ""),
+            "grammar_focus": "sentence word order",
+        }
+    except Exception as e:
+        return {"correct": False, "explanation": f"Fehler: {str(e)}", "grammar_focus": "sentence word order"}
+
+
 def evaluate_answer(player_name: str, challenge: str, player_answer: str, cefr: str = "B2") -> dict:
     """
     Send answer to Haiku for evaluation.

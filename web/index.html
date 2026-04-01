@@ -867,7 +867,7 @@ function TopBar({ state }) {
         <span style={{color:"var(--text-dim)"}}>/{state.mana_max}</span>
       </span>
       <span className="top-stat">🔥 <span className="streak-val">{state.streak}d</span></span>
-      <span className="top-stat">🪙 <span className="gold-val">{state.gold}</span></span>
+
     </div>
   );
 }
@@ -939,7 +939,7 @@ function StatsPanel({ state }) {
 
 // ── Inventory Panel ───────────────────────────────────────────
 function InventoryPanel({ state, onItemClick }) {
-  if (!state || !state.inventory?.length) return null;
+  if (!state) return null;
   return (
     <div className="panel">
       <div className="panel-title">🗡 Inventar</div>
@@ -1203,7 +1203,9 @@ function GameScreen({ initialState }) {
         c.type === "leseverstehen" ? {...c, _diary_entry: r.diary} : c
       );
       setChallenges(injected);
-      setChalIdx(0);
+      const startIdx = (r.challenge_index && r.challenge_index < injected.length) ? r.challenge_index : 0;
+      setChalIdx(startIdx);
+      if (startIdx > 0) setPhase("challenge");
       setResult(null);
       setAnswer("");
       setPhase("narration");
@@ -1232,14 +1234,17 @@ function GameScreen({ initialState }) {
 
     try {
       const r = await api("/api/answer", "POST", {
-        challenge_id:          chal.id || "",
-        challenge_type:        chal.type || "dialogantwort",
-        prompt_en:             chal.prompt_de || chal.prompt_en || "",
-        player_answer:         answer.trim(),
-        grammar_focus:         chal.grammar_focus || "",
-        min_words:             chal.min_words || 0,
-        diary_entry:           chal._diary_entry || "",
+        challenge_id:           chal.id || "",
+        challenge_type:         chal.type || "dialogantwort",
+        prompt_en:              chal.prompt_en || "",
+        prompt_de:              chal.prompt_de || "",
+        correct_de:             chal.correct_de || chal.example_answer || "",
+        player_answer:          answer.trim(),
+        grammar_focus:          chal.grammar_focus || "",
+        min_words:              chal.min_words || 0,
+        diary_entry:            chal._diary_entry || "",
         leseverstehen_question: chal.leseverstehen_question || "",
+        challenge_index:        chalIdx,
       });
 
       setState(r.state);
@@ -1269,12 +1274,17 @@ function GameScreen({ initialState }) {
 
     const next = chalIdx + 1;
     if (next < challenges.length) {
+      // Save progress so refresh resumes here
+      await api("/api/answer", "POST", {
+        challenge_id: "__progress__", challenge_type: "__save__",
+        prompt_en: "", player_answer: "__save__",
+        challenge_index: next,
+      }).catch(()=>{});
       setChalIdx(next);
       setResult(null);
       setAnswer("");
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
-      // Complete chapter
       await completeChapter();
     }
   }
@@ -1342,7 +1352,7 @@ function GameScreen({ initialState }) {
         if (r.success) {
           setModal({
             title: "🌀 Zungengabe",
-            content: chal?.prompt_de || "Keine Übersetzung verfügbar.",
+            content: chal?.prompt_en || "No English translation available.",
           });
         } else {
           setModal({ title: "Mana", content: r.message });
@@ -1359,6 +1369,38 @@ function GameScreen({ initialState }) {
           title: "👁 Weissagung — Brunhildes Wissen",
           content: r.result || r.message,
         });
+      }
+      else if (cmd === "/portal") {
+        const chal = challenges[chalIdx];
+        const PORTAL_COST = 30;
+        if ((state.mana || 0) < PORTAL_COST) {
+          setModal({ title: "🌌 Zauberpforte", content: `Nicht genug Mana. Du brauchst ${PORTAL_COST} Mana.` });
+          setLoading(false); return;
+        }
+        const correctAns = chal?.correct_de || chal?.example_answer || "—";
+        const r = await api("/api/magic-portal", "POST", {
+          correct_answer: correctAns,
+          xp_reward: chal?.xp_reward || 10,
+          grammar_focus: chal?.grammar_focus || "",
+          challenge_index: chalIdx,
+        });
+        if (r.success) {
+          setState(r.state);
+          setModal({
+            title: "🌌 Zauberpforte — Antwort enthüllt",
+            content: `Die Antwort: ${correctAns}\n\n+${r.xp_gained} XP (halbe Belohnung)\n\nDiese Herausforderung wird übersprungen.`,
+          });
+          // Auto-advance after portal use
+          setTimeout(() => {
+            setModal(null);
+            const next = chalIdx + 1;
+            if (next < challenges.length) {
+              setChalIdx(next); setResult(null); setAnswer("");
+            } else { completeChapter(); }
+          }, 2500);
+        } else {
+          setModal({ title: "🌌 Zauberpforte", content: r.message });
+        }
       }
       else if (cmd === "/scroll") {
         setModal({
@@ -1674,6 +1716,10 @@ function GameScreen({ initialState }) {
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/stein")}
           disabled={hintsLeft <= 0}>
           💎 STEIN {hintsLeft > 0 ? `(${hintsLeft})` : "(0)"}
+        </button>
+        <button className="cmd-btn cinzel" onClick={() => handleCommand("/portal")}
+          style={{color:"var(--amber)"}}>
+          🌌 PFORTE ·30
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/translate")}>
           🌀 ZUNGENGABE

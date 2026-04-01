@@ -51,6 +51,7 @@ class GameState(BaseModel):
     episode: int = 1
     act: int = 1
     chapter: int = 1
+    challenge_index: int = 0             # saves position within chapter on refresh
     episode_1_ending: Optional[str] = None   # "rache" | "vergebung" | None
 
     # Skills

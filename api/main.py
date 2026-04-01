@@ -29,7 +29,7 @@ from engine.item_engine import get_active_multiplier
 from engine.srs_engine import log_mistake, log_correct, build_srs_context
 from engine.diary import get_entry, store_entry, get_all_entries_text
 from engine.flashcard import mark_seen, mana_reward
-from ai.evaluator import evaluate_answer, get_hint
+from ai.evaluator import evaluate_answer, get_hint, evaluate_satzbau
 from ai.narrator import (narrate_chapter, explain_grammar, narrate_epilogue,
                           generate_diary_entry, evaluate_leseverstehen,
                           elder_scroll_lookup, generate_flashcards,
@@ -77,11 +77,14 @@ class AnswerRequest(BaseModel):
     challenge_id: str
     challenge_type: str
     prompt_en: str
+    prompt_de: str = ""
+    correct_de: str = ""              # for satzbau
     player_answer: str
     grammar_focus: str = ""
-    min_words: int = 0          # for langtext
-    diary_entry: str = ""       # for leseverstehen
+    min_words: int = 0
+    diary_entry: str = ""
     leseverstehen_question: str = ""
+    challenge_index: int = 0          # current position in chapter
 
 class CommandRequest(BaseModel):
     command: str
@@ -160,13 +163,13 @@ def get_chapter(episode: int, act: int, chapter: int):
     if not ch:
         return {"exists": False}
 
-    # Get or generate narration
-    narration = get_entry(episode, act, chapter)
+    # Get or generate narration (separate key from diary)
+    narration = get_entry(episode, act, f"narration_{chapter}")
     if narration is None:
         narration = narrate_chapter(state.player_name, ch, state.cefr_preference)
-        store_entry(episode, act, chapter, narration)
+        store_entry(episode, act, f"narration_{chapter}", narration)
 
-    # Get or generate diary entry
+    # Get or generate diary entry (separate key)
     diary = get_entry(episode, act, f"diary_{chapter}")
     if diary is None:
         diary = generate_diary_entry(state.player_name, ch, state.cefr_preference)
@@ -181,11 +184,52 @@ def get_chapter(episode: int, act: int, chapter: int):
     state.chapter_hints_used = 0
     save_state(state)
 
+    # Restore challenge_index so refresh resumes from correct position
+    saved_index = state.challenge_index if state.chapter == chapter and state.act == act else 0
+
     return {
-        "exists": True,
-        "chapter": ch,
-        "narration": narration,
-        "diary": diary,
+        "exists":          True,
+        "chapter":         ch,
+        "narration":       narration,
+        "diary":           diary,
+        "challenge_index": saved_index,
+    }
+
+
+@app.post("/api/magic-portal")
+def magic_portal(body: dict):
+    """
+    Reveal the correct answer and mark the challenge as passed.
+    Costs 30 Mana. Awards half normal XP.
+    """
+    state = load_state()
+    if not state:
+        raise HTTPException(status_code=404, detail="No save state")
+
+    PORTAL_COST = 30
+    if state.mana < PORTAL_COST:
+        return {"success": False, "message": f"Nicht genug Mana. Du brauchst {PORTAL_COST} Mana."}
+
+    state.mana -= PORTAL_COST
+    correct_answer = body.get("correct_answer", "")
+    xp_reward = body.get("xp_reward", 10)
+    grammar_focus = body.get("grammar_focus", "")
+    challenge_index = body.get("challenge_index", 0)
+
+    # Award half XP
+    half_xp = max(1, xp_reward // 2)
+    xp_result = award_xp(state, half_xp)
+    state.challenge_index = challenge_index + 1
+    if grammar_focus:
+        log_mistake(grammar_focus)  # still log as needing work
+
+    save_state(state)
+    return {
+        "success":       True,
+        "correct_answer": correct_answer,
+        "xp_gained":     half_xp,
+        "levelled_up":   xp_result["levelled_up"],
+        "state":         state.model_dump(),
     }
 
 
@@ -197,10 +241,22 @@ def submit_answer(req: AnswerRequest):
         raise HTTPException(status_code=404, detail="No save state")
 
     state.accuracy_attempts += 1
+    state.challenge_index = req.challenge_index
 
     # Route to correct evaluator
-    if req.challenge_type == "langtext":
+    if req.challenge_type == "__save__":
+        # Progress save only — no evaluation
+        state.challenge_index = req.challenge_index
+        save_state(state)
+        return {"correct": True, "explanation": "", "grammar_focus": "",
+                "xp_gained": 0, "levelled_up": False, "state": state.model_dump()}
+
+    if req.challenge_type == "satzbau":
+        result = evaluate_satzbau(req.correct_de or req.prompt_en,
+                                   req.player_answer, state.cefr_preference)
+    elif req.challenge_type == "langtext":
         if len(req.player_answer.split()) < req.min_words:
+            save_state(state)
             return {
                 "correct": False,
                 "explanation": f"Zu kurz — {len(req.player_answer.split())} Wörter. Mindestens {req.min_words} benötigt.",
@@ -219,7 +275,7 @@ def submit_answer(req: AnswerRequest):
         )
     else:
         result = evaluate_answer(
-            state.player_name, req.prompt_en,
+            state.player_name, req.prompt_de or req.prompt_en,
             req.player_answer, state.cefr_preference
         )
 
@@ -239,6 +295,14 @@ def submit_answer(req: AnswerRequest):
         levelled_up = xp_result["levelled_up"]
         if req.grammar_focus:
             log_correct(req.grammar_focus)
+        # Update skill scores
+        gf = req.grammar_focus.lower()
+        if any(w in gf for w in ["vocab","wort","word"]):
+            state.skills.vocabulary = min(100, state.skills.vocabulary + 2)
+        elif any(w in gf for w in ["writing","schreib","long","text"]):
+            state.skills.writing = min(100, state.skills.writing + 3)
+        else:
+            state.skills.grammar = min(100, state.skills.grammar + 1)
     else:
         if req.grammar_focus:
             log_mistake(req.grammar_focus)

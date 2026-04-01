@@ -77,6 +77,30 @@ Give ONE helpful hint about the grammar or vocabulary needed.
 Do NOT give the answer directly. Max 2 sentences. Write in English."""
 
 
+def satzbau_prompt(correct_de: str, player_answer: str, cefr: str = "B2") -> str:
+    """
+    Haiku prompt: evaluate a Satzbau (sentence reconstruction) answer.
+    More lenient — checks meaning and key words, not exact match.
+    """
+    return f"""You are evaluating a German sentence reconstruction exercise. Level: {cefr}.
+
+The correct sentence is: "{correct_de}"
+The player answered: "{player_answer}"
+
+Accept the answer as correct if:
+- All the key words are present (even if order differs slightly)
+- The meaning is equivalent
+- Minor punctuation differences are fine
+
+Reject only if important words are missing or the meaning changes significantly.
+Respond ONLY in valid JSON:
+{{
+  "correct": true or false,
+  "explanation": "ONE short German sentence of feedback. Max 12 words.",
+  "grammar_focus": "sentence word order"
+}}"""
+
+
 def langtext_prompt(player_name: str, scenario: str, player_text: str,
                     min_words: int, cefr: str = "B2") -> str:
     """
