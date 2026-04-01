@@ -10,26 +10,31 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
     :root {
-      --bg:        #0a0c12;
-      --bg2:       #0f1219;
-      --bg3:       #151820;
-      --panel:     #111318;
-      --border:    #1e2230;
-      --gold:      #c9a84c;
-      --gold2:     #e8c97a;
-      --gold-dim:  #6b5520;
-      --purple:    #7c4fc4;
-      --purple2:   #a374e8;
-      --blue:      #3d7abf;
-      --blue2:     #5fa0e8;
-      --red:       #c44040;
-      --red2:      #e86060;
-      --green:     #3aaf6e;
-      --green2:    #5ed48e;
-      --text:      #c8cdd8;
-      --text-dim:  #6b7080;
-      --text-gold: #e8c97a;
-      --white:     #f0f2f8;
+      --bg:        #110e0a;
+      --bg2:       #1a1510;
+      --bg3:       #211a12;
+      --panel:     #1e1810;
+      --stone:     #2a2218;
+      --stone2:    #332a1c;
+      --border:    #4a3d28;
+      --crack:     #5a4a30;
+      --gold:      #c9943a;
+      --gold2:     #e8b86a;
+      --gold-dim:  #7a5e28;
+      --gold-glow: rgba(232,184,106,0.15);
+      --amber:     #d4822a;
+      --purple:    #8b5a2a;
+      --purple2:   #c4844a;
+      --blue:      #5a7a4a;
+      --blue2:     #8ab87a;
+      --red:       #b83a2a;
+      --red2:      #e05a4a;
+      --green:     #4a8a3a;
+      --green2:    #7ab86a;
+      --text:      #c8b89a;
+      --text-dim:  #7a6a50;
+      --text-gold: #e8b86a;
+      --white:     #ede0c8;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,15 +48,42 @@
       overflow-x: hidden;
     }
 
-    /* ── Atmospheric background ── */
+    /* ── Stone texture background ── */
     body::before {
       content: '';
       position: fixed; inset: 0;
       background:
-        radial-gradient(ellipse at 20% 0%, rgba(124,79,196,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 100%, rgba(61,122,191,0.05) 0%, transparent 60%),
-        radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.02) 0%, transparent 70%);
+        repeating-linear-gradient(
+          87deg,
+          transparent 0px, transparent 80px,
+          rgba(90,74,48,0.04) 80px, rgba(90,74,48,0.04) 81px
+        ),
+        repeating-linear-gradient(
+          3deg,
+          transparent 0px, transparent 120px,
+          rgba(90,74,48,0.03) 120px, rgba(90,74,48,0.03) 121px
+        ),
+        radial-gradient(ellipse at 15% 10%, rgba(212,130,42,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 90%, rgba(212,130,42,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(90,74,48,0.1) 0%, transparent 70%);
       pointer-events: none; z-index: 0;
+    }
+
+    /* Torch flicker vignette */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%,
+        rgba(212,130,42,0.06) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+      animation: torchFlicker 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes torchFlicker {
+      0%   { opacity: 0.6; }
+      30%  { opacity: 1; }
+      60%  { opacity: 0.75; }
+      100% { opacity: 0.9; }
     }
 
     /* ── Typography ── */
@@ -67,10 +99,14 @@
       padding: 0;
     }
 
-    /* ── Top Bar ── */
+    /* ── Top Bar — carved stone lintel ── */
     .top-bar {
-      background: linear-gradient(180deg, #0d1018 0%, var(--bg2) 100%);
-      border-bottom: 1px solid var(--border);
+      background:
+        linear-gradient(180deg, #0e0b07 0%, #1a1510 60%, #211a12 100%);
+      border-bottom: 2px solid var(--crack);
+      box-shadow:
+        inset 0 -1px 0 rgba(90,74,48,0.5),
+        0 2px 8px rgba(0,0,0,0.6);
       padding: 10px 16px;
       display: flex;
       align-items: center;
@@ -79,15 +115,22 @@
       position: sticky; top: 0; z-index: 100;
     }
 
+    /* Crack line on top bar */
+    .top-bar::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 20%; right: 40%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(90,74,48,0.6), transparent);
+    }
+
     .player-name {
       font-family: 'Cinzel', serif;
       color: var(--gold2);
       font-size: 15px;
       font-weight: 700;
       letter-spacing: 0.05em;
+      text-shadow: 0 0 12px rgba(232,184,106,0.4);
     }
-
-    .top-bar-sep { color: var(--border); font-size: 12px; }
 
     .top-stat {
       font-size: 13px;
@@ -96,37 +139,52 @@
     }
 
     .top-stat span { color: var(--text); }
-
     .mana-val { color: var(--purple2); }
     .gold-val { color: var(--gold); }
-    .streak-val { color: #e86020; }
+    .streak-val { color: var(--amber); }
     .level-val { color: var(--blue2); }
 
-    /* ── Panels ── */
-    .main-layout {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-
+    /* ── Panels — worn stone slabs ── */
     .panel {
-      background: var(--panel);
+      background:
+        linear-gradient(135deg, var(--stone) 0%, var(--panel) 50%, var(--stone2) 100%);
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 2px;
       margin: 8px;
       padding: 14px;
       position: relative;
+      box-shadow:
+        inset 0 1px 0 rgba(90,74,48,0.3),
+        inset 0 -1px 0 rgba(0,0,0,0.4),
+        2px 2px 6px rgba(0,0,0,0.4);
+    }
+
+    /* Stone crack decoration on panels */
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 15%; width: 1px; height: 30%;
+      background: linear-gradient(180deg, var(--crack), transparent);
+      opacity: 0.5;
+    }
+
+    .panel::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 25%; width: 1px; height: 20%;
+      background: linear-gradient(0deg, var(--crack), transparent);
+      opacity: 0.4;
     }
 
     .panel-title {
       font-family: 'Cinzel', serif;
-      font-size: 11px;
-      letter-spacing: 0.15em;
+      font-size: 10px;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--gold-dim);
       margin-bottom: 10px;
       display: flex; align-items: center; gap: 8px;
+      text-shadow: 0 0 8px rgba(201,148,58,0.3);
     }
 
     .panel-title::after {
@@ -136,7 +194,7 @@
       background: linear-gradient(90deg, var(--gold-dim), transparent);
     }
 
-    /* ── XP Bar ── */
+    /* ── XP Bars — worn channels in stone ── */
     .xp-section { margin-bottom: 12px; }
 
     .xp-label {
@@ -147,23 +205,24 @@
 
     .bar-track {
       height: 6px;
-      background: var(--bg3);
-      border-radius: 3px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 1px;
       overflow: hidden;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(90,74,48,0.4);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.6);
     }
 
     .bar-fill {
       height: 100%;
-      border-radius: 3px;
+      border-radius: 1px;
       transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .bar-gold { background: linear-gradient(90deg, var(--gold-dim), var(--gold)); }
-    .bar-blue { background: linear-gradient(90deg, #1e4a7a, var(--blue2)); }
-    .bar-purple { background: linear-gradient(90deg, #3d1f7a, var(--purple2)); }
-    .bar-green { background: linear-gradient(90deg, #1a5a38, var(--green2)); }
-    .bar-mana { background: linear-gradient(90deg, #2d1a5a, var(--purple2)); }
+    .bar-gold   { background: linear-gradient(90deg, #7a5e28, #c9943a, #e8b86a); }
+    .bar-blue   { background: linear-gradient(90deg, #2a4a1e, var(--blue2)); }
+    .bar-purple { background: linear-gradient(90deg, #5a3a18, var(--purple2)); }
+    .bar-green  { background: linear-gradient(90deg, #2a4a1a, var(--green2)); }
+    .bar-mana   { background: linear-gradient(90deg, #5a3a18, #c4844a); }
 
     .skill-row {
       display: flex; align-items: center; gap: 8px;
@@ -178,34 +237,38 @@
     .skill-bar { flex: 1; }
     .skill-bar .bar-track { height: 4px; }
 
-    /* ── Story Panel ── */
+    /* ── Story Panel — parchment feel ── */
     .narration-text {
       font-size: 16px;
-      line-height: 1.7;
-      color: var(--text);
+      line-height: 1.8;
+      color: var(--white);
       font-style: italic;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
     }
 
-    /* ── Challenge Panel ── */
+    /* ── Challenge Box — carved inscription ── */
     .challenge-box {
-      background: var(--bg3);
-      border: 1px solid var(--purple);
-      border-radius: 4px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--crack);
+      border-left: 3px solid var(--gold-dim);
+      border-radius: 2px;
       padding: 14px;
       margin-bottom: 12px;
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.4);
     }
 
     .challenge-prompt {
       font-size: 16px;
-      line-height: 1.6;
+      line-height: 1.7;
       color: var(--white);
     }
 
+    /* ── Multiple Choice — stone tablets ── */
     .mc-option {
       display: flex; align-items: flex-start; gap: 10px;
-      background: var(--bg3);
+      background: linear-gradient(135deg, var(--stone) 0%, var(--bg3) 100%);
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 2px;
       padding: 10px 12px;
       margin-bottom: 6px;
       cursor: pointer;
@@ -214,12 +277,13 @@
       color: var(--text);
       text-align: left;
       width: 100%;
+      box-shadow: 1px 1px 4px rgba(0,0,0,0.3);
     }
 
     .mc-option:hover, .mc-option:active {
-      border-color: var(--purple);
-      background: rgba(124,79,196,0.1);
-      color: var(--white);
+      border-color: var(--gold-dim);
+      background: linear-gradient(135deg, var(--stone2), var(--stone));
+      color: var(--gold2);
     }
 
     .mc-num {
@@ -230,15 +294,16 @@
       padding-top: 1px;
     }
 
-    /* ── Input ── */
+    /* ── Input — carved into stone ── */
     .input-area {
       display: flex; flex-direction: column; gap: 8px;
     }
 
     .answer-input {
-      background: var(--bg3);
+      background: rgba(0,0,0,0.4);
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-bottom: 2px solid var(--gold-dim);
+      border-radius: 2px 2px 0 0;
       color: var(--white);
       font-family: 'Crimson Pro', serif;
       font-size: 16px;
@@ -247,82 +312,113 @@
       transition: border-color 0.2s;
       outline: none;
       resize: none;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
     }
 
-    .answer-input:focus { border-color: var(--purple); }
+    .answer-input:focus {
+      border-bottom-color: var(--gold);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 8px rgba(201,148,58,0.2);
+    }
+
     .answer-input::placeholder { color: var(--text-dim); font-style: italic; }
 
+    /* ── Submit Button — stone relief ── */
     .submit-btn {
-      background: linear-gradient(135deg, var(--purple) 0%, #5c3a9e 100%);
-      border: none;
-      border-radius: 4px;
-      color: var(--white);
+      background: linear-gradient(180deg, var(--stone2) 0%, var(--bg3) 40%, #0e0b07 100%);
+      border: 1px solid var(--crack);
+      border-top: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--gold2);
       font-family: 'Cinzel', serif;
-      font-size: 13px;
-      letter-spacing: 0.1em;
+      font-size: 12px;
+      letter-spacing: 0.15em;
       padding: 12px 20px;
       cursor: pointer;
       transition: all 0.2s;
       width: 100%;
+      text-shadow: 0 0 8px rgba(232,184,106,0.4);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(90,74,48,0.3);
     }
 
-    .submit-btn:hover { background: linear-gradient(135deg, #8f5fd4 0%, #6b4ab0 100%); }
-    .submit-btn:active { transform: scale(0.98); }
-    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .submit-btn:hover {
+      background: linear-gradient(180deg, var(--stone2) 0%, var(--stone) 60%, var(--bg3) 100%);
+      border-color: var(--gold-dim);
+      box-shadow: 0 0 12px rgba(201,148,58,0.2), inset 0 1px 0 rgba(90,74,48,0.5);
+    }
+
+    .submit-btn:active { transform: translateY(1px); }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     /* ── Result Feedback ── */
     .result-box {
       padding: 12px 14px;
-      border-radius: 4px;
+      border-radius: 2px;
       margin-bottom: 10px;
       font-size: 15px;
       line-height: 1.5;
+      border-left-width: 3px;
+      border-left-style: solid;
     }
 
     .result-correct {
-      background: rgba(58,175,110,0.1);
-      border: 1px solid var(--green);
+      background: rgba(74,138,58,0.1);
+      border: 1px solid rgba(74,138,58,0.4);
+      border-left: 3px solid var(--green);
       color: var(--green2);
     }
 
     .result-wrong {
-      background: rgba(196,64,64,0.1);
-      border: 1px solid var(--red);
+      background: rgba(184,58,42,0.1);
+      border: 1px solid rgba(184,58,42,0.4);
+      border-left: 3px solid var(--red);
       color: var(--red2);
     }
 
     .result-icon { font-size: 18px; margin-right: 6px; }
     .result-explanation { color: var(--text); font-size: 14px; margin-top: 6px; }
 
-    /* ── Command Bar ── */
+    /* ── Command Bar — temple floor frieze ── */
     .cmd-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      padding: 10px 16px;
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
+      gap: 5px;
+      padding: 10px 12px;
+      background: linear-gradient(0deg, #0a0704 0%, var(--bg2) 100%);
+      border-top: 2px solid var(--crack);
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.6),
+                  inset 0 1px 0 rgba(90,74,48,0.3);
       position: sticky; bottom: 0; z-index: 100;
     }
 
+    /* ── Command Buttons — carved rune stones ── */
     .cmd-btn {
-      background: var(--bg3);
+      background: linear-gradient(180deg, var(--stone2) 0%, var(--stone) 100%);
       border: 1px solid var(--border);
-      border-radius: 3px;
-      color: var(--purple2);
+      border-bottom: 2px solid rgba(0,0,0,0.5);
+      border-radius: 2px;
+      color: var(--text-dim);
       font-family: 'Cinzel', serif;
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      padding: 5px 8px;
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      padding: 5px 7px;
       cursor: pointer;
       transition: all 0.15s;
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
     }
 
-    .cmd-btn:hover { border-color: var(--purple); background: rgba(124,79,196,0.1); }
-    .cmd-btn.disabled { color: var(--text-dim); cursor: not-allowed; }
-    .cmd-hint { color: var(--text-dim); font-size: 10px; }
+    .cmd-btn:hover {
+      border-color: var(--gold-dim);
+      color: var(--gold2);
+      background: linear-gradient(180deg, var(--stone2) 0%, var(--stone2) 100%);
+      box-shadow: 0 0 6px rgba(201,148,58,0.15);
+    }
 
-    /* ── Inventory ── */
+    .cmd-btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+    /* ── Inventory — relic display ── */
     .inventory-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -330,70 +426,81 @@
     }
 
     .inv-item {
-      background: var(--bg3);
+      background: linear-gradient(135deg, var(--bg3), var(--stone));
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 2px;
       padding: 8px 6px;
       text-align: center;
       font-size: 11px;
       color: var(--text-dim);
       cursor: pointer;
       transition: all 0.15s;
+      box-shadow: inset 0 1px 0 rgba(90,74,48,0.2), 1px 1px 3px rgba(0,0,0,0.4);
     }
 
-    .inv-item:hover { border-color: var(--gold-dim); color: var(--gold); }
+    .inv-item:hover {
+      border-color: var(--gold-dim);
+      color: var(--gold);
+      box-shadow: 0 0 8px rgba(201,148,58,0.15), inset 0 1px 0 rgba(90,74,48,0.3);
+    }
 
-    .inv-icon { font-size: 18px; display: block; margin-bottom: 3px; }
+    .inv-icon { font-size: 20px; display: block; margin-bottom: 3px; }
 
-    /* ── Modal / Overlay ── */
+    /* ── Modal — stone tablet rising ── */
     .modal-overlay {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       display: flex; align-items: flex-end;
       z-index: 200;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(2px);
     }
 
     .modal {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 12px 12px 0 0;
+      background:
+        linear-gradient(180deg, var(--stone2) 0%, var(--panel) 30%, var(--stone) 100%);
+      border: 1px solid var(--crack);
+      border-top: 2px solid var(--border);
+      border-radius: 4px 4px 0 0;
       padding: 20px;
       width: 100%;
       max-height: 80vh;
       overflow-y: auto;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.8),
+                  inset 0 1px 0 rgba(90,74,48,0.4);
     }
 
     .modal-title {
       font-family: 'Cinzel', serif;
       color: var(--gold2);
-      font-size: 15px;
-      letter-spacing: 0.1em;
+      font-size: 14px;
+      letter-spacing: 0.12em;
       margin-bottom: 14px;
+      text-shadow: 0 0 10px rgba(232,184,106,0.3);
     }
 
     .modal-text {
       font-size: 15px;
-      line-height: 1.7;
+      line-height: 1.8;
       color: var(--text);
       white-space: pre-wrap;
     }
 
     .modal-close {
-      background: var(--bg3);
+      background: linear-gradient(180deg, var(--stone2), var(--bg3));
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-bottom: 2px solid rgba(0,0,0,0.5);
+      border-radius: 2px;
       color: var(--text-dim);
       font-family: 'Cinzel', serif;
-      font-size: 11px;
-      letter-spacing: 0.1em;
+      font-size: 10px;
+      letter-spacing: 0.12em;
       padding: 10px 20px;
       cursor: pointer;
       width: 100%;
       margin-top: 14px;
     }
 
-    /* ── Welcome Screen ── */
+    /* ── Welcome Screen — temple entrance ── */
     .welcome-screen {
       min-height: 100vh;
       display: flex;
@@ -402,6 +509,9 @@
       justify-content: center;
       padding: 24px;
       text-align: center;
+      background:
+        radial-gradient(ellipse at 50% 20%, rgba(212,130,42,0.08) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.4) 0%, transparent 60%);
     }
 
     .game-title {
@@ -409,10 +519,13 @@
       font-size: clamp(22px, 6vw, 36px);
       font-weight: 900;
       color: var(--gold2);
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       line-height: 1.2;
       margin-bottom: 6px;
-      text-shadow: 0 0 40px rgba(201,168,76,0.3);
+      text-shadow:
+        0 0 30px rgba(232,184,106,0.4),
+        0 0 60px rgba(212,130,42,0.2),
+        2px 2px 4px rgba(0,0,0,0.8);
     }
 
     .game-subtitle {
@@ -420,22 +533,23 @@
       font-style: italic;
       font-size: 15px;
       color: var(--text-dim);
-      margin-bottom: 32px;
+      margin-bottom: 28px;
       letter-spacing: 0.08em;
     }
 
     .rune-divider {
       color: var(--gold-dim);
       font-size: 18px;
-      letter-spacing: 0.4em;
-      margin: 16px 0;
+      letter-spacing: 0.5em;
+      margin: 14px 0;
+      text-shadow: 0 0 8px rgba(201,148,58,0.3);
     }
 
     .name-input {
-      background: var(--bg3);
+      background: rgba(0,0,0,0.5);
       border: 1px solid var(--border);
       border-bottom: 2px solid var(--gold-dim);
-      border-radius: 4px 4px 0 0;
+      border-radius: 2px 2px 0 0;
       color: var(--white);
       font-family: 'Cinzel', serif;
       font-size: 18px;
@@ -447,24 +561,33 @@
       outline: none;
       transition: border-color 0.2s;
       margin-bottom: 16px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
     }
 
-    .name-input:focus { border-bottom-color: var(--gold); }
-    .name-input::placeholder { color: var(--text-dim); font-size: 14px; font-family: 'Crimson Pro', serif; font-style: italic; }
+    .name-input:focus {
+      border-bottom-color: var(--gold);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.6), 0 0 10px rgba(201,148,58,0.2);
+    }
+
+    .name-input::placeholder {
+      color: var(--text-dim); font-size: 14px;
+      font-family: 'Crimson Pro', serif; font-style: italic;
+    }
 
     .level-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 6px;
       width: 100%;
       max-width: 340px;
       margin-bottom: 20px;
     }
 
     .level-btn {
-      background: var(--bg3);
+      background: linear-gradient(135deg, var(--stone2), var(--stone));
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-bottom: 2px solid rgba(0,0,0,0.4);
+      border-radius: 2px;
       color: var(--text-dim);
       font-family: 'Cinzel', serif;
       font-size: 11px;
@@ -473,12 +596,14 @@
       cursor: pointer;
       transition: all 0.15s;
       text-align: center;
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
     }
 
     .level-btn:hover, .level-btn.active {
-      border-color: var(--gold);
+      border-color: var(--gold-dim);
       color: var(--gold2);
-      background: rgba(201,168,76,0.08);
+      background: linear-gradient(135deg, var(--stone2), #3a2e1c);
+      text-shadow: 0 0 6px rgba(232,184,106,0.3);
     }
 
     .level-btn small {
@@ -491,26 +616,33 @@
     }
 
     .start-btn {
-      background: linear-gradient(135deg, var(--gold-dim) 0%, #8a6420 100%);
-      border: 1px solid var(--gold);
-      border-radius: 4px;
-      color: var(--bg);
+      background: linear-gradient(180deg, var(--stone2) 0%, var(--bg3) 50%, #0a0704 100%);
+      border: 1px solid var(--crack);
+      border-top: 1px solid var(--border);
+      border-bottom: 3px solid rgba(0,0,0,0.6);
+      border-radius: 2px;
+      color: var(--gold2);
       font-family: 'Cinzel', serif;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.2em;
       padding: 14px 32px;
       cursor: pointer;
       transition: all 0.2s;
       width: 100%;
       max-width: 340px;
+      text-shadow: 0 0 10px rgba(232,184,106,0.5);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.6), inset 0 1px 0 rgba(90,74,48,0.3);
     }
 
     .start-btn:hover {
-      background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 100%);
+      border-color: var(--gold-dim);
+      box-shadow: 0 0 16px rgba(201,148,58,0.25), 0 3px 8px rgba(0,0,0,0.6);
     }
 
-    /* ── Chapter title ── */
+    .start-btn:active { transform: translateY(2px); box-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+
+    /* ── Chapter Header ── */
     .chapter-header {
       text-align: center;
       padding: 12px 0 4px;
@@ -519,7 +651,7 @@
     .chapter-num {
       font-family: 'Cinzel', serif;
       font-size: 10px;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.25em;
       color: var(--text-dim);
       text-transform: uppercase;
     }
@@ -530,9 +662,10 @@
       color: var(--gold2);
       letter-spacing: 0.05em;
       margin-top: 4px;
+      text-shadow: 0 0 12px rgba(232,184,106,0.3);
     }
 
-    /* ── Score bars for langtext ── */
+    /* ── Score dots ── */
     .score-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -540,12 +673,9 @@
       margin-bottom: 12px;
     }
 
-    .score-item { }
     .score-label { font-size: 11px; color: var(--text-dim); margin-bottom: 3px; }
 
-    .score-dots {
-      display: flex; gap: 3px;
-    }
+    .score-dots { display: flex; gap: 3px; }
 
     .score-dot {
       width: 10px; height: 10px;
@@ -560,27 +690,29 @@
     /* ── Loading ── */
     .loading-text {
       font-family: 'Cinzel', serif;
-      font-size: 12px;
-      letter-spacing: 0.15em;
+      font-size: 11px;
+      letter-spacing: 0.2em;
       color: var(--text-dim);
       text-align: center;
       padding: 20px;
-      animation: pulse 1.5s ease-in-out infinite;
+      animation: pulse 2s ease-in-out infinite;
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 1; }
+      0%, 100% { opacity: 0.3; }
+      50%       { opacity: 0.8; }
     }
 
     /* ── Flashcard ── */
     .flashcard {
-      background: var(--bg3);
-      border: 1px solid var(--gold-dim);
-      border-radius: 8px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--crack);
+      border-top: 2px solid var(--gold-dim);
+      border-radius: 2px;
       padding: 24px 16px;
       text-align: center;
       margin-bottom: 14px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
     }
 
     .flashcard-english {
@@ -588,6 +720,7 @@
       font-size: 20px;
       color: var(--white);
       margin-bottom: 8px;
+      text-shadow: 0 0 8px rgba(232,184,106,0.2);
     }
 
     .flashcard-example {
@@ -598,8 +731,8 @@
 
     .fc-progress {
       font-family: 'Cinzel', serif;
-      font-size: 11px;
-      letter-spacing: 0.1em;
+      font-size: 10px;
+      letter-spacing: 0.15em;
       color: var(--text-dim);
       text-align: center;
       margin-bottom: 10px;
@@ -613,24 +746,27 @@
 
     .epilogue-seal {
       font-family: 'Cinzel', serif;
-      font-size: 13px;
+      font-size: 12px;
       letter-spacing: 0.2em;
       color: var(--gold2);
       padding: 12px 20px;
       border: 1px solid var(--gold-dim);
-      border-radius: 4px;
+      border-radius: 2px;
       display: inline-block;
       margin: 16px 0;
+      text-shadow: 0 0 8px rgba(232,184,106,0.4);
+      box-shadow: 0 0 12px rgba(201,148,58,0.1);
     }
 
     .continue-btn {
-      background: var(--bg3);
+      background: linear-gradient(180deg, var(--stone2), var(--bg3));
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-bottom: 2px solid rgba(0,0,0,0.4);
+      border-radius: 2px;
       color: var(--text-dim);
       font-family: 'Cinzel', serif;
-      font-size: 11px;
-      letter-spacing: 0.1em;
+      font-size: 10px;
+      letter-spacing: 0.12em;
       padding: 12px 24px;
       cursor: pointer;
       margin-top: 16px;
@@ -643,9 +779,9 @@
 
     .scroll-input input {
       flex: 1;
-      background: var(--bg3);
+      background: rgba(0,0,0,0.4);
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 2px;
       color: var(--white);
       font-family: 'Crimson Pro', serif;
       font-size: 16px;
@@ -653,20 +789,22 @@
       outline: none;
     }
 
-    .scroll-input input:focus { border-color: var(--gold); }
+    .scroll-input input:focus { border-color: var(--gold-dim); }
 
     .scroll-lookup-btn {
-      background: linear-gradient(135deg, var(--gold-dim), #6b5018);
-      border: 1px solid var(--gold-dim);
-      border-radius: 4px;
-      color: var(--bg);
+      background: linear-gradient(180deg, var(--stone2), var(--bg3));
+      border: 1px solid var(--border);
+      border-bottom: 2px solid rgba(0,0,0,0.4);
+      border-radius: 2px;
+      color: var(--gold);
       font-family: 'Cinzel', serif;
-      font-size: 11px;
-      padding: 10px 14px;
+      font-size: 10px;
+      padding: 10px 12px;
       cursor: pointer;
+      letter-spacing: 0.08em;
     }
 
-    /* ── Accordion stats (mobile) ── */
+    /* ── Stats toggle ── */
     .stats-toggle {
       display: flex; justify-content: space-between; align-items: center;
       cursor: pointer; user-select: none;
@@ -678,8 +816,6 @@
     }
 
     .xp-inline .bar-track { width: 80px; }
-
-    /* ── Item icons map ── */
   </style>
 </head>
 <body>
@@ -1200,13 +1336,13 @@ function GameScreen({ initialState }) {
         const r = await api("/api/diary");
         setModal({ title: "📖 Grimnirs Tagebuch", content: r.entries });
       }
-      else if (cmd === "/translate") {
+      if (cmd === "/translate") {
         const r = await api("/api/command", "POST", { command: "/translate" });
         setState(r.state || state);
         if (r.success) {
           setModal({
-            title: "Übersetzung",
-            content: chal?.prompt_de || "Keine deutsche Version verfügbar.",
+            title: "🌀 Zungengabe",
+            content: chal?.prompt_de || "Keine Übersetzung verfügbar.",
           });
         } else {
           setModal({ title: "Mana", content: r.message });
@@ -1220,7 +1356,7 @@ function GameScreen({ initialState }) {
         });
         setState(r.state || state);
         setModal({
-          title: "📋 Brunhilde erklärt",
+          title: "👁 Weissagung — Brunhildes Wissen",
           content: r.result || r.message,
         });
       }
@@ -1540,10 +1676,10 @@ function GameScreen({ initialState }) {
           💎 STEIN {hintsLeft > 0 ? `(${hintsLeft})` : "(0)"}
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/translate")}>
-          🔤 ÜBERSETZEN
+          🌀 ZUNGENGABE
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/erkläre")}>
-          📋 ERKLÄREN
+          👁 WEISSAGUNG
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/diary")}>
           📖 TAGEBUCH
