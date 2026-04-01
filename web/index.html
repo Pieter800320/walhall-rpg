@@ -1294,6 +1294,16 @@ function GameScreen({ initialState }) {
         <div style={{color:"var(--text-dim)",fontSize:13,marginTop:24}}>
           Die nächsten Kapitel werden bald verfügbar sein.
         </div>
+        <button className="modal-close cinzel"
+          style={{marginTop:32}}
+          onClick={async () => {
+            if (confirm("Neues Spiel starten? Alle Fortschritte werden gelöscht.")) {
+              await api("/api/reset", "POST");
+              window.location.reload();
+            }
+          }}>
+          NEUES SPIEL STARTEN
+        </button>
       </div>
     </div>
   );

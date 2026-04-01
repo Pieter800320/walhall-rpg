@@ -375,6 +375,16 @@ def complete_flashcards(body: dict):
     return {"mana_gained": mana, "state": state.model_dump()}
 
 
+@app.post("/api/reset")
+def reset_game():
+    """Delete the save file and diary cache — returns to welcome screen."""
+    import glob
+    save_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "save")
+    for f in glob.glob(os.path.join(save_dir, "*.json")):
+        os.remove(f)
+    return {"reset": True}
+
+
 @app.post("/api/complete-chapter")
 def complete_chapter(body: dict):
     """Award completion XP and advance chapter."""
