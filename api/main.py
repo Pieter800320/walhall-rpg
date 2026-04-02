@@ -38,6 +38,26 @@ from ai.narrator import (narrate_chapter, explain_grammar, narrate_epilogue,
 import json
 
 STORY_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "story")
+SAVE_DIR  = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "save")
+
+def get_save_path(slot: str = "default") -> str:
+    """Return the save file path for a given slot."""
+    # Sanitise slot name to prevent path traversal
+    safe = "".join(c for c in slot if c.isalnum() or c in "_-")[:40] or "default"
+    return os.path.join(SAVE_DIR, f"save_{safe}.json")
+
+def load_state_slot(slot: str = "default"):
+    path = get_save_path(slot)
+    if not os.path.exists(path):
+        return None
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return GameState(**data)
+
+def save_state_slot(state: GameState, slot: str = "default") -> None:
+    os.makedirs(SAVE_DIR, exist_ok=True)
+    with open(get_save_path(slot), "w", encoding="utf-8") as f:
+        json.dump(state.model_dump(), f, indent=2, ensure_ascii=False)
 
 app = FastAPI(title="Walhall RPG API", version="1.0")
 
@@ -72,41 +92,47 @@ def load_chapter_data(episode: int, act: int, chapter: int) -> dict | None:
 class NewGameRequest(BaseModel):
     player_name: str
     cefr_preference: str = "B2"
+    slot: str = "default"
 
 class AnswerRequest(BaseModel):
     challenge_id: str
     challenge_type: str
     prompt_en: str
     prompt_de: str = ""
-    correct_de: str = ""              # for satzbau
+    correct_de: str = ""
     player_answer: str
     grammar_focus: str = ""
     min_words: int = 0
     diary_entry: str = ""
     leseverstehen_question: str = ""
-    challenge_index: int = 0          # current position in chapter
+    challenge_index: int = 0
+    slot: str = "default"
 
 class CommandRequest(BaseModel):
     command: str
-    word: str = ""              # for /scroll
-    prompt_en: str = ""         # for /stein /erkläre
+    word: str = ""
+    prompt_en: str = ""
     grammar_focus: str = ""
     example_answer: str = ""
+    slot: str = "default"
 
 class ChapterRequest(BaseModel):
     episode: int
     act: int
     chapter: int
+    slot: str = "default"
 
 class FlashcardAnswerRequest(BaseModel):
     german: str
     english: str
     player_answer: str
+    slot: str = "default"
 
 class LangtextRequest(BaseModel):
     scenario: str
     player_text: str
     min_words: int = 50
+    slot: str = "default"
 
 
 # ── Routes ────────────────────────────────────────────────────────
@@ -131,12 +157,13 @@ def debug():
 
 
 @app.get("/api/state")
-def get_state():
-    """Return current game state. Creates fresh state if none exists."""
-    state = load_state()
+def get_state(slot: str = "default"):
+    """Return current game state."""
+    state = load_state_slot(slot)
     if state is None:
         return {"exists": False}
     regen_mana(state)
+    save_state_slot(state, slot)
     return {"exists": True, "state": state.model_dump()}
 
 
@@ -148,14 +175,14 @@ def new_game(req: NewGameRequest):
         cefr_preference=req.cefr_preference,
         last_played=str(date.today()),
     )
-    save_state(state)
+    save_state_slot(state, req.slot)
     return {"state": state.model_dump()}
 
 
 @app.get("/api/chapter/{episode}/{act}/{chapter}")
-def get_chapter(episode: int, act: int, chapter: int):
+def get_chapter(episode: int, act: int, chapter: int, slot: str = "default"):
     """Load chapter data including narration."""
-    state = load_state()
+    state = load_state_slot(slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state found")
 
@@ -198,11 +225,12 @@ def get_chapter(episode: int, act: int, chapter: int):
 
 @app.post("/api/magic-portal")
 def magic_portal(body: dict):
+    slot = body.get("slot","default")
     """
     Reveal the correct answer and mark the challenge as passed.
     Costs 30 Mana. Awards half normal XP.
     """
-    state = load_state()
+    state = load_state_slot(req.slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
 
@@ -223,7 +251,7 @@ def magic_portal(body: dict):
     if grammar_focus:
         log_mistake(grammar_focus)  # still log as needing work
 
-    save_state(state)
+    save_state_slot(state, slot)
     return {
         "success":       True,
         "correct_answer": correct_answer,
@@ -236,7 +264,7 @@ def magic_portal(body: dict):
 @app.post("/api/answer")
 def submit_answer(req: AnswerRequest):
     """Evaluate a player answer and return result + updated state."""
-    state = load_state()
+    state = load_state_slot(req.slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
 
@@ -307,7 +335,7 @@ def submit_answer(req: AnswerRequest):
         if req.grammar_focus:
             log_mistake(req.grammar_focus)
 
-    save_state(state)
+    save_state_slot(state, req.slot)
 
     return {
         **result,
@@ -320,7 +348,7 @@ def submit_answer(req: AnswerRequest):
 @app.post("/api/command")
 def handle_command(req: CommandRequest):
     """Handle game commands: /stein, /translate, /erkläre, /scroll, /würfeln."""
-    state = load_state()
+    state = load_state_slot(req.slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
 
@@ -379,18 +407,18 @@ def handle_command(req: CommandRequest):
 @app.post("/api/set-level")
 def set_level(body: dict):
     """Update the player's CEFR preference."""
-    state = load_state()
+    state = load_state_slot(req.slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     state.cefr_preference = body.get("cefr", "B2")
-    save_state(state)
+    save_state_slot(state, slot)
     return {"state": state.model_dump()}
 
 
 @app.get("/api/diary")
 def get_diary():
     """Return all diary entries for episode 1."""
-    state = load_state()
+    state = load_state_slot(req.slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     entries = get_all_entries_text(state.episode)
@@ -400,7 +428,7 @@ def get_diary():
 @app.post("/api/flashcards/generate")
 def generate_cards(req: ChapterRequest):
     """Generate 5 flashcards for the given chapter."""
-    state = load_state()
+    state = load_state_slot(req.slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     ch = load_chapter_data(req.episode, req.act, req.chapter)
@@ -415,7 +443,7 @@ def generate_cards(req: ChapterRequest):
 @app.post("/api/flashcards/evaluate")
 def evaluate_card(req: FlashcardAnswerRequest):
     """Evaluate a single flashcard answer."""
-    state = load_state()
+    state = load_state_slot(req.slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     result = evaluate_flashcard(
@@ -428,31 +456,31 @@ def evaluate_card(req: FlashcardAnswerRequest):
 @app.post("/api/flashcards/complete")
 def complete_flashcards(body: dict):
     """Award Mana for completing a flashcard round."""
-    state = load_state()
+    state = load_state_slot(req.slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     correct = body.get("correct", 0)
     total   = body.get("total", 5)
     mana = mana_reward(correct, total)
     state.mana = min(state.mana + mana, state.mana_max)
-    save_state(state)
+    save_state_slot(state, slot)
     return {"mana_gained": mana, "state": state.model_dump()}
 
 
 @app.post("/api/reset")
-def reset_game():
-    """Delete the save file and diary cache — returns to welcome screen."""
-    import glob
-    save_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "save")
-    for f in glob.glob(os.path.join(save_dir, "*.json")):
-        os.remove(f)
+def reset_game(body: dict = {}):
+    """Delete a specific slot save file."""
+    slot = body.get("slot","default") if body else "default"
+    path = get_save_path(slot)
+    if os.path.exists(path):
+        os.remove(path)
     return {"reset": True}
 
 
 @app.post("/api/complete-chapter")
 def complete_chapter(body: dict):
     """Award completion XP and advance chapter."""
-    state = load_state()
+    state = load_state_slot(req.slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     completion_xp   = body.get("completion_xp", 50)
@@ -467,13 +495,12 @@ def complete_chapter(body: dict):
 
     if next_chapter:
         state.chapter = next_chapter
-        # Advance act when chapter crosses act boundaries
         if next_chapter >= 4 and state.act == 1:
             state.act = 2
         elif next_chapter >= 8 and state.act == 2:
             state.act = 3
 
-    save_state(state)
+    save_state_slot(state, slot)
 
     # Generate epilogue if episode complete
     epilogue = None
@@ -504,12 +531,12 @@ def _detect_ending(answer: str) -> str:
 @app.post("/api/streak")
 def update_streak():
     """Call once per session to update daily streak."""
-    state = load_state()
+    state = load_state_slot(req.slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     today = str(date.today())
     if state.last_played != today:
         state.streak += 1
         state.last_played = today
-        save_state(state)
+        save_state_slot(state, slot)
     return {"streak": state.streak, "state": state.model_dump()}

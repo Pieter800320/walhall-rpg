@@ -826,6 +826,34 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 const API = "https://walhall-rpg-production.up.railway.app";
 
+// ── Save slot helpers (stored in phone's localStorage) ─────────
+const SLOT_KEY = "walhall_active_slot";
+const SLOTS_KEY = "walhall_slots";
+
+function getActiveSlot() {
+  return localStorage.getItem(SLOT_KEY) || "default";
+}
+
+function setActiveSlot(slot) {
+  localStorage.setItem(SLOT_KEY, slot);
+}
+
+function getAllSlots() {
+  try { return JSON.parse(localStorage.getItem(SLOTS_KEY) || "[]"); }
+  catch { return []; }
+}
+
+function saveSlotMeta(slot, meta) {
+  const slots = getAllSlots().filter(s => s.slot !== slot);
+  slots.push({ slot, ...meta, updated: new Date().toISOString() });
+  localStorage.setItem(SLOTS_KEY, JSON.stringify(slots));
+}
+
+function deleteSlotMeta(slot) {
+  const slots = getAllSlots().filter(s => s.slot !== slot);
+  localStorage.setItem(SLOTS_KEY, JSON.stringify(slots));
+}
+
 const ITEM_ICONS = {
   "Schwert": "⚔️", "Stab": "🪄", "Bogen": "🏹",
   "Runentafel": "🪨", "Offenbarungsstein": "💎",
@@ -845,8 +873,16 @@ const CEFR_OPTIONS = [
 // ── API helpers ────────────────────────────────────────────────
 async function api(path, method = "GET", body = null) {
   const opts = { method, headers: { "Content-Type": "application/json" } };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(API + path, opts);
+  // Inject active slot into all requests
+  const slot = getActiveSlot();
+  if (body) {
+    opts.body = JSON.stringify({ ...body, slot });
+  } else if (method !== "GET") {
+    opts.body = JSON.stringify({ slot });
+  }
+  // Append slot to GET requests as query param
+  const url = method === "GET" ? `${API}${path}?slot=${slot}` : `${API}${path}`;
+  const res = await fetch(url, opts);
   return res.json();
 }
 
@@ -1165,7 +1201,7 @@ function FlashcardRound({ state, chapterInfo, onComplete, onStateUpdate }) {
 }
 
 // ── Main Game Screen ──────────────────────────────────────────
-function GameScreen({ initialState }) {
+function GameScreen({ initialState, onNewGame }) {
   const [state, setState] = useState(initialState);
   const [chapter, setChapter] = useState(null);
   const [narration, setNarration] = useState("");
@@ -1493,14 +1529,23 @@ function GameScreen({ initialState }) {
           Die nächsten Kapitel werden bald verfügbar sein.
         </div>
         <button className="modal-close cinzel"
-          style={{marginTop:32}}
+          style={{marginTop:16}}
           onClick={async () => {
-            if (confirm("Neues Spiel starten? Alle Fortschritte werden gelöscht.")) {
-              await api("/api/reset", "POST");
-              window.location.reload();
+            if (confirm("Neues Spiel starten? Dieser Spielstand bleibt gespeichert.")) {
+              onNewGame && onNewGame();
             }
           }}>
-          NEUES SPIEL STARTEN
+          ⚔ NEUES SPIEL STARTEN
+        </button>
+        <button className="modal-close cinzel"
+          style={{marginTop:8}}
+          onClick={async () => {
+            if (confirm("Diesen Spielstand löschen und neu beginnen?")) {
+              await api("/api/reset", "POST");
+              onNewGame && onNewGame();
+            }
+          }}>
+          🗑 SPIELSTAND LÖSCHEN
         </button>
       </div>
     </div>
@@ -1738,7 +1783,7 @@ function GameScreen({ initialState }) {
           💎 STEIN {hintsLeft > 0 ? `(${hintsLeft})` : "(0)"}
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/portal")}
-          style={{color:"var(--amber)"}}>
+          >
           🌌 PFORTE ·30
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/translate")}>
@@ -1830,35 +1875,136 @@ function GameScreen({ initialState }) {
   );
 }
 
+// ── Save Slot Screen ──────────────────────────────────────────
+function SlotScreen({ onLoad, onNew }) {
+  const slots = getAllSlots();
+  const CEFR_LABELS = {A1:"Anfänger",A2:"Grundkenntnisse",B1:"Mittelstufe",B2:"Obere Mittelstufe",C1:"Fortgeschritten"};
+
+  return (
+    <div className="welcome-screen">
+      <div className="game-title">DER SCHATTEN<br/>VON WALHALL</div>
+      <div className="game-subtitle">Ein deutsches Lern-Rollenspiel</div>
+      <div className="rune-divider">ᚠ ᚢ ᚦ ᚨ ᚱ</div>
+
+      {slots.length > 0 && (
+        <div style={{width:"100%",maxWidth:340,marginBottom:16}}>
+          <div className="cinzel" style={{fontSize:10,letterSpacing:"0.2em",
+            color:"var(--text-dim)",marginBottom:8,textAlign:"center"}}>
+            GESPEICHERTE SPIELE
+          </div>
+          {slots.map(s => (
+            <div key={s.slot} style={{
+              background:"var(--stone)",border:"1px solid var(--border)",
+              borderRadius:2,padding:"10px 12px",marginBottom:6,
+              display:"flex",alignItems:"center",justifyContent:"space-between"
+            }}>
+              <div>
+                <div className="cinzel" style={{color:"var(--gold2)",fontSize:13}}>
+                  {s.name}
+                </div>
+                <div style={{fontSize:11,color:"var(--text-dim)"}}>
+                  Lvl {s.level} · Akt {s.act} · Kap {s.chapter} · {CEFR_LABELS[s.cefr]||s.cefr}
+                </div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button className="cmd-btn cinzel" onClick={() => onLoad(s.slot)}
+                  style={{color:"var(--gold)"}}>
+                  LADEN
+                </button>
+                <button className="cmd-btn cinzel" onClick={() => {
+                  if(confirm(`"${s.name}" löschen?`)) {
+                    deleteSlotMeta(s.slot);
+                    window.location.reload();
+                  }
+                }} style={{color:"var(--red2)"}}>
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button className="start-btn cinzel" onClick={onNew}>
+        ⚔ NEUES SPIEL BEGINNEN
+      </button>
+    </div>
+  );
+}
+
 // ── Root App ──────────────────────────────────────────────────
 function App() {
   const [gameState, setGameState] = useState(null);
   const [checking, setChecking] = useState(true);
+  const [showNew, setShowNew] = useState(false);
 
   useEffect(() => {
+    const slot = getActiveSlot();
     api("/api/state").then(r => {
-      if (r.exists) setGameState(r.state);
+      if (r.exists) {
+        // Update slot metadata
+        saveSlotMeta(slot, {
+          name: r.state.player_name,
+          level: r.state.level,
+          act: r.state.act,
+          chapter: r.state.chapter,
+          cefr: r.state.cefr_preference,
+        });
+        setGameState(r.state);
+      }
       setChecking(false);
     }).catch(() => setChecking(false));
-
-    // Update streak
     api("/api/streak", "POST").catch(() => {});
   }, []);
 
+  function handleLoad(slot) {
+    setActiveSlot(slot);
+    setChecking(true);
+    api("/api/state").then(r => {
+      if (r.exists) setGameState(r.state);
+      else setShowNew(true);
+      setChecking(false);
+    });
+  }
+
   if (checking) return (
-    <div style={{
-      minHeight:"100vh",display:"flex",
-      alignItems:"center",justifyContent:"center",
-      flexDirection:"column",gap:12
-    }}>
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",
+      justifyContent:"center",flexDirection:"column",gap:12}}>
       <div style={{fontSize:28}}>⚔️</div>
       <div className="loading-text cinzel">DAS REICH ERWACHT...</div>
     </div>
   );
 
-  if (!gameState) return <WelcomeScreen onStart={setGameState} />;
+  // No save exists and not starting new — show slot screen
+  if (!gameState && !showNew) {
+    const slots = getAllSlots();
+    if (slots.length > 0) {
+      return <SlotScreen onLoad={handleLoad} onNew={() => setShowNew(true)} />;
+    }
+  }
 
-  return <GameScreen initialState={gameState} />;
+  if (!gameState || showNew) {
+    return <WelcomeScreen onStart={(state) => {
+      const slot = getActiveSlot();
+      saveSlotMeta(slot, {
+        name: state.player_name, level: state.level,
+        act: state.act, chapter: state.chapter, cefr: state.cefr_preference,
+      });
+      setShowNew(false);
+      setGameState(state);
+    }} onNewSlot={() => {
+      // Create a new slot
+      const newSlot = `slot_${Date.now()}`;
+      setActiveSlot(newSlot);
+    }} />;
+  }
+
+  return <GameScreen initialState={gameState} onNewGame={() => {
+    const newSlot = `slot_${Date.now()}`;
+    setActiveSlot(newSlot);
+    setGameState(null);
+    setShowNew(true);
+  }} />;
 }
 
 ReactDOM.render(<App />, document.getElementById("root"));
