@@ -1250,6 +1250,15 @@ function GameScreen({ initialState }) {
       setState(r.state);
       setResult(r);
 
+      // Save progress immediately on correct answer so refresh resumes here
+      if (r.correct) {
+        api("/api/answer", "POST", {
+          challenge_id: "__progress__", challenge_type: "__save__",
+          prompt_en: "", player_answer: "__save__",
+          challenge_index: chalIdx + 1,
+        }).catch(()=>{});
+      }
+
       if (r.correct && chal.item_reward) {
         // Show item reward after a short delay
         setTimeout(() => {
