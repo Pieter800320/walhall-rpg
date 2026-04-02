@@ -188,55 +188,66 @@ def evaluate_leseverstehen(player_name: str, diary_entry: str,
 
 
 def narrate_epilogue(player_name: str, ending: str, stats: dict) -> str:
-    """
-    Generate the personalised episode epilogue using Sonnet.
-    Called once when chapter 9 completes.
-    ending: "rache" | "vergebung"
-    """
+    """Generate personalised episode epilogue with retry logic."""
+    import time
     from ai.prompts import epilogue_prompt
     prompt = epilogue_prompt(player_name, ending, stats)
 
-    try:
-        response = client.messages.create(
-            model=SONNET_MODEL,
-            max_tokens=600,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        import re
-        text = response.content[0].text.strip()
-        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
-        text = re.sub(r'\*(.*?)\*', r'\1', text)
-        text = re.sub(r'^#{1,3}\s.*$', '', text, flags=re.MULTILINE)
-        text = re.sub(r'^---+$', '', text, flags=re.MULTILINE)
-        text = re.sub(r'^>\s.*$', '', text, flags=re.MULTILINE)
-        text = re.sub(r'\n{3,}', '\n\n', text).strip()
-        return text
-    except Exception as e:
-        return f"[Epilogue unavailable: {str(e)}]"
+    for attempt in range(3):
+        try:
+            model = SONNET_MODEL if attempt < 2 else HAIKU_MODEL
+            response = client.messages.create(
+                model=model,
+                max_tokens=600,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            import re
+            text = response.content[0].text.strip()
+            text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+            text = re.sub(r'\*(.*?)\*', r'\1', text)
+            text = re.sub(r'^#{1,3}\s.*$', '', text, flags=re.MULTILINE)
+            text = re.sub(r'^---+$', '', text, flags=re.MULTILINE)
+            text = re.sub(r'\n{3,}', '\n\n', text).strip()
+            return text
+        except Exception as e:
+            if "overloaded" in str(e).lower() and attempt < 2:
+                time.sleep(3)
+                continue
+            return "[Epilog nicht verfügbar — bitte neu laden.]"
+    return "[Epilog nicht verfügbar.]"
 
 
 def narrate_chapter(player_name: str, chapter_data: dict, cefr: str = "B2") -> str:
-    """Generate immersive chapter opening text using Sonnet."""
+    """Generate immersive chapter opening text. Falls back to Haiku if Sonnet overloaded."""
+    import time
     srs = build_srs_context()
     prompt = narrator_prompt(player_name, chapter_data, srs, cefr)
 
-    try:
-        response = client.messages.create(
-            model=SONNET_MODEL,
-            max_tokens=400,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        import re
-        text = response.content[0].text.strip()
-        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
-        text = re.sub(r'\*(.*?)\*', r'\1', text)
-        text = re.sub(r'^#{1,3}\s.*$', '', text, flags=re.MULTILINE)
-        text = re.sub(r'^---+$', '', text, flags=re.MULTILINE)
-        text = re.sub(r'^>\s.*$', '', text, flags=re.MULTILINE)
-        text = re.sub(r'\n{3,}', '\n\n', text).strip()
-        return text
-    except Exception as e:
-        return f"[Narration unavailable: {str(e)}]"
+    for attempt in range(3):
+        try:
+            model = SONNET_MODEL if attempt < 2 else HAIKU_MODEL
+            response = client.messages.create(
+                model=model,
+                max_tokens=400,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            import re
+            text = response.content[0].text.strip()
+            text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+            text = re.sub(r'\*(.*?)\*', r'\1', text)
+            text = re.sub(r'^#{1,3}\s.*$', '', text, flags=re.MULTILINE)
+            text = re.sub(r'^---+$', '', text, flags=re.MULTILINE)
+            text = re.sub(r'^>\s.*$', '', text, flags=re.MULTILINE)
+            text = re.sub(r'\n{3,}', '\n\n', text).strip()
+            return text
+        except Exception as e:
+            err = str(e)
+            if "overloaded" in err.lower() and attempt < 2:
+                time.sleep(3)
+                continue
+            if attempt == 2:
+                return f"[{player_name} betritt {chapter_data.get('title', 'das nächste Kapitel')}. Die Schatten warten...]"
+    return "[Erzählung nicht verfügbar — bitte neu laden.]"
 
 
 def explain_grammar(player_name: str, grammar_focus: str, example_sentence: str) -> str:
