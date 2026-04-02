@@ -19,8 +19,11 @@
           "prompt_en": "An old woman blocks your path. She asks: 'Who are you, stranger?' — answer her in German.",
           "example_answer": "Ich bin [name]. Ich komme aus dem Norden.",
           "grammar_focus": "verb sein (to be), first person present",
-          "xp_reward": 10,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c1_q2",
@@ -29,8 +32,11 @@
           "prompt_en": "Translate: 'I am looking for help.'",
           "correct_de": "Ich suche Hilfe.",
           "grammar_focus": "present tense, accusative object",
-          "xp_reward": 10,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c1_q3",
@@ -40,8 +46,11 @@
           "prompt_en": "A child runs up to you and asks: 'Can you help us?' — answer in German.",
           "example_answer": "Ja, ich kann helfen. Was ist passiert?",
           "grammar_focus": "modal verb können, first person",
-          "xp_reward": 15,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c1_q4",
@@ -56,8 +65,11 @@
           ],
           "correct_de": "Ich möchte dem Dorf helfen.",
           "grammar_focus": "dative dem Dorf after helfen, modal möchten",
-          "xp_reward": 15,
-          "item_reward": "Schwert"
+          "xp_reward": 4,
+          "item_reward": "Schwert",
+          "tier": 2,
+          "mana_reward": 4,
+          "gold_reward": 0
         }
       ],
       "completion_xp": 50,
@@ -78,8 +90,11 @@
           "prompt_en": "Translate: 'I have gone into the forest.'",
           "correct_de": "Ich bin in den Wald gegangen.",
           "grammar_focus": "Perfekt tense with sein",
-          "xp_reward": 10,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c2_q2",
@@ -88,8 +103,11 @@
           "prompt_en": "Fix the sentence: 'Der Baum ist sehr alt und er hat viele Jahren gelebt.' — find and correct the error.",
           "correct_de": "Der Baum ist sehr alt und er hat viele Jahre gelebt.",
           "grammar_focus": "accusative case after haben",
-          "xp_reward": 15,
-          "item_reward": null
+          "xp_reward": 4,
+          "item_reward": null,
+          "tier": 2,
+          "mana_reward": 4,
+          "gold_reward": 0
         },
         {
           "id": "c2_q3",
@@ -99,8 +117,11 @@
           "prompt_en": "The shadow whispers from the trees: 'Where have you come from?' — answer in German using Perfekt tense.",
           "example_answer": "Ich bin aus dem Norden gekommen.",
           "grammar_focus": "Perfekt tense with sein, directional phrases",
-          "xp_reward": 15,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c2_q4",
@@ -109,8 +130,11 @@
           "prompt_en": "Reconstruct this scrambled sentence: 'gesehen / habe / Schatten / Ich / den / heute Nacht'",
           "correct_de": "Ich habe den Schatten heute Nacht gesehen.",
           "grammar_focus": "Perfekt word order, accusative definite article",
-          "xp_reward": 20,
-          "item_reward": "Ältere Schriftrolle"
+          "xp_reward": 6,
+          "item_reward": "Ältere Schriftrolle",
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c2_q5",
@@ -119,8 +143,11 @@
           "prompt_en": "Your diary entry for today appears above. Read it carefully, then answer in German: What did you find at the edge of the forest?",
           "leseverstehen_question": "What did the player find at the edge of the Nebelwald, according to their diary entry?",
           "grammar_focus": "reading comprehension",
-          "xp_reward": 20,
-          "item_reward": "Runenstein"
+          "xp_reward": 8,
+          "item_reward": "Runenstein",
+          "tier": 4,
+          "mana_reward": 8,
+          "gold_reward": 2
         }
       ],
       "completion_xp": 75,
@@ -142,8 +169,11 @@
           "prompt_en": "Brunhilde stares into the fire and asks: 'What must you find here?' — answer in German using a modal verb.",
           "example_answer": "Ich muss die Wahrheit über meinen Fluch finden.",
           "grammar_focus": "modal verb müssen, accusative object",
-          "xp_reward": 15,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c3_q2",
@@ -152,8 +182,11 @@
           "prompt_en": "Translate: 'I cannot leave without help.'",
           "correct_de": "Ich kann nicht ohne Hilfe gehen.",
           "grammar_focus": "modal verb können, negation with nicht",
-          "xp_reward": 15,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c3_q3",
@@ -162,8 +195,11 @@
           "prompt_en": "Fix the sentence: 'Du darfst nicht die alten Götter vergessen werden.'",
           "correct_de": "Du darfst die alten Götter nicht vergessen.",
           "grammar_focus": "modal verb dürfen, infinitive without werden",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 4,
+          "item_reward": null,
+          "tier": 2,
+          "mana_reward": 4,
+          "gold_reward": 0
         },
         {
           "id": "c3_q4",
@@ -173,8 +209,11 @@
           "prompt_en": "Brunhilde whispers: 'Can you resist the shadow alone?' — answer honestly in German, using können.",
           "example_answer": "Ich kann dem Schatten nicht allein widerstehen. Ich brauche deine Hilfe.",
           "grammar_focus": "modal verb können, dative object with widerstehen",
-          "xp_reward": 20,
-          "item_reward": "Glückswürfel"
+          "xp_reward": 8,
+          "item_reward": "Glückswürfel",
+          "tier": 4,
+          "mana_reward": 8,
+          "gold_reward": 2
         }
       ],
       "completion_xp": 100,

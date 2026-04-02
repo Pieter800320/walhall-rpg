@@ -17,8 +17,11 @@
           "prompt_en": "Translate: 'Run into the forest!'",
           "correct_de": "Lauf in den Wald!",
           "grammar_focus": "imperative form of laufen, accusative with in",
-          "xp_reward": 10,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c4_q2",
@@ -28,8 +31,11 @@
           "prompt_en": "A rider screams through the trees: 'Stop! Tell us your name!' — answer in German using the imperative to deflect him.",
           "example_answer": "Wartet! Ich bin kein Feind. Mein Name ist Grimnir.",
           "grammar_focus": "imperative plural (wartet), first person introduction",
-          "xp_reward": 15,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c4_q3",
@@ -37,8 +43,11 @@
           "prompt_en": "Fix the sentence: 'Ich sehe den Jäger nicht, aber ich höre ihm.'",
           "correct_de": "Ich sehe den Jäger nicht, aber ich höre ihn.",
           "grammar_focus": "accusative pronoun ihn vs dative ihm after hören",
-          "xp_reward": 15,
-          "item_reward": null
+          "xp_reward": 4,
+          "item_reward": null,
+          "tier": 2,
+          "mana_reward": 4,
+          "gold_reward": 0
         },
         {
           "id": "c4_q4",
@@ -46,8 +55,11 @@
           "prompt_en": "Reconstruct: 'den / Weg / Zeig / mir / durch / den / Wald'",
           "correct_de": "Zeig mir den Weg durch den Wald.",
           "grammar_focus": "imperative zeig, dative mir, accusative den Weg",
-          "xp_reward": 15,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c4_q5",
@@ -57,8 +69,11 @@
           "prompt_en": "A voice like thunder speaks from everywhere at once: 'What do you seek in my forest, mortal?' — answer Wotan in German.",
           "example_answer": "Ich suche den Schatten, der das Dorf bedroht. Ich meine Euch keinen Schaden.",
           "grammar_focus": "accusative object after suchen, formal address",
-          "xp_reward": 20,
-          "item_reward": "Runentafel"
+          "xp_reward": 8,
+          "item_reward": "Runentafel",
+          "tier": 4,
+          "mana_reward": 8,
+          "gold_reward": 2
         }
       ],
       "completion_xp": 120,
@@ -78,8 +93,11 @@
           "prompt_en": "Translate formally: 'Can you help me?' — use Sie.",
           "correct_de": "Können Sie mir helfen?",
           "grammar_focus": "formal Sie, dative mir after helfen",
-          "xp_reward": 15,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c5_q2",
@@ -89,8 +107,11 @@
           "prompt_en": "The Zwergenkönig strokes his beard and asks: 'What do you offer us in return, stranger?' — answer formally in German.",
           "example_answer": "Ich biete Ihnen meine Dienste als Krieger. Ich werde Ihnen bei drei Aufgaben helfen.",
           "grammar_focus": "formal Ihnen (dative Sie), future intention with werden",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c5_q3",
@@ -98,8 +119,11 @@
           "prompt_en": "Fix the sentence: 'Ich gebe der König das Schwert.'",
           "correct_de": "Ich gebe dem König das Schwert.",
           "grammar_focus": "dative dem after geben (indirect object)",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 4,
+          "item_reward": null,
+          "tier": 2,
+          "mana_reward": 4,
+          "gold_reward": 0
         },
         {
           "id": "c5_q4",
@@ -107,8 +131,11 @@
           "prompt_en": "Reconstruct: 'dem / Fluch / mit / kann / helfen / Ihnen / Nur / das Feuer'",
           "correct_de": "Nur das Feuer kann Ihnen mit dem Fluch helfen.",
           "grammar_focus": "dative Ihnen and dem Fluch after helfen mit",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c5_q5",
@@ -118,8 +145,11 @@
           "prompt_en": "The king nods: 'Good. We have an agreement. How may I serve you?' — ask him formally in German about the curse on your family.",
           "example_answer": "Können Sie mir bitte mehr über den Fluch auf meiner Familie erzählen? Ich muss die Wahrheit wissen.",
           "grammar_focus": "formal Sie request with bitte, dative meiner Familie",
-          "xp_reward": 25,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c5_q6",
@@ -128,8 +158,11 @@
           "prompt_de": "Der König verlangt einen schriftlichen Eid. Schreibe mindestens 60 Wörter auf Deutsch: schwöre deinen Eid, erkläre warum du die Wahrheit suchst, und versprich was du tun wirst, wenn der Fluch gebrochen ist.",
           "min_words": 60,
           "grammar_focus": "long-form writing — future tense, formal register, argumentation",
-          "xp_reward": 60,
-          "item_reward": "Dämmerklinge"
+          "xp_reward": 12,
+          "item_reward": "Dämmerklinge",
+          "tier": 6,
+          "mana_reward": 12,
+          "gold_reward": 4
         }
       ],
       "completion_xp": 150,
@@ -149,8 +182,11 @@
           "prompt_en": "Translate: 'If I knew the truth, I could help the village.'",
           "correct_de": "Wenn ich die Wahrheit wüsste, könnte ich dem Dorf helfen.",
           "grammar_focus": "Konjunktiv II: wüsste and könnte, dative dem Dorf",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c6_q2",
@@ -160,8 +196,11 @@
           "prompt_en": "The Nixe rises from the water: 'What would you sacrifice to learn the truth?' — answer in German using Konjunktiv II.",
           "example_answer": "Ich würde alles opfern, was ich habe. Ich würde sogar mein Leben riskieren.",
           "grammar_focus": "Konjunktiv II würde + infinitive, indefinite pronoun alles",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c6_q3",
@@ -169,8 +208,11 @@
           "prompt_en": "Fix: 'Wenn du ehrlich wärst, ich würde dir glauben.'",
           "correct_de": "Wenn du ehrlich wärst, würde ich dir glauben.",
           "grammar_focus": "Konjunktiv II word order — verb second in main clause after wenn",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 4,
+          "item_reward": null,
+          "tier": 2,
+          "mana_reward": 4,
+          "gold_reward": 0
         },
         {
           "id": "c6_q4",
@@ -180,8 +222,11 @@
           "prompt_en": "The Nixe's eyes gleam: 'What would you have done if your grandmother had not made the pact?' — answer in German using past Konjunktiv II.",
           "example_answer": "Wenn sie den Pakt nicht geschlossen hätte, wäre mein Vater gestorben. Sie hatte keine andere Wahl.",
           "grammar_focus": "past Konjunktiv II: hätte geschlossen, wäre gestorben",
-          "xp_reward": 25,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c6_q5",
@@ -191,8 +236,11 @@
           "prompt_en": "The Nixe sinks back into the water: 'How could you free the spirit without losing yourself?' — answer in German.",
           "example_answer": "Ich könnte den Geist befreien, wenn ich keine Angst mehr hätte. Mut wäre meine einzige Waffe.",
           "grammar_focus": "Konjunktiv II könnte, conditional wenn clause, noun Mut as subject",
-          "xp_reward": 25,
-          "item_reward": null
+          "xp_reward": 8,
+          "item_reward": null,
+          "tier": 4,
+          "mana_reward": 8,
+          "gold_reward": 2
         }
       ],
       "completion_xp": 175,
@@ -212,8 +260,11 @@
           "prompt_en": "Translate: 'I came here because the village needs help.'",
           "correct_de": "Ich bin hierher gekommen, weil das Dorf Hilfe braucht.",
           "grammar_focus": "weil subordinate clause, verb at end",
-          "xp_reward": 15,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c7_q2",
@@ -221,8 +272,11 @@
           "prompt_en": "Fix: 'Obwohl er lügt, die Dorfbewohner glauben ihm.'",
           "correct_de": "Obwohl er lügt, glauben die Dorfbewohner ihm.",
           "grammar_focus": "obwohl subordinate clause forces verb-second in main clause",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 4,
+          "item_reward": null,
+          "tier": 2,
+          "mana_reward": 4,
+          "gold_reward": 0
         },
         {
           "id": "c7_q3",
@@ -232,8 +286,11 @@
           "prompt_en": "The Bürgermeister points at you and shouts to the crowd: 'This stranger brought the shadow! Drive him out!' — defend yourself in German using weil or obwohl.",
           "example_answer": "Das ist falsch! Obwohl ihr mir nicht vertraut, habe ich nur versucht, euch zu helfen. Ich bin gekommen, weil der Schatten schon vor mir hier war.",
           "grammar_focus": "obwohl and weil clauses, Perfekt tense, accusative euch",
-          "xp_reward": 25,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c7_q4",
@@ -241,8 +298,11 @@
           "prompt_en": "Reconstruct: 'hat / deshalb / Der Bürgermeister / den Schatten / er / gefüttert / Angst, / hatte'",
           "correct_de": "Der Bürgermeister hatte Angst, deshalb hat er den Schatten gefüttert.",
           "grammar_focus": "deshalb as coordinating connector, Perfekt in second clause",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c7_q5",
@@ -252,8 +312,11 @@
           "prompt_en": "A woman steps forward from the crowd: 'But why should we believe you?' — make your case in German. Use at least two connectives.",
           "example_answer": "Ihr sollt mir glauben, weil ich beweise habe. Der Bürgermeister hat mit dem Schatten gesprochen, trotzdem hat er nichts gesagt. Deshalb ist das Dorf in Gefahr.",
           "grammar_focus": "weil, trotzdem, deshalb — multiple connectives, Perfekt tense",
-          "xp_reward": 30,
-          "item_reward": "Bogen"
+          "xp_reward": 8,
+          "item_reward": "Bogen",
+          "tier": 4,
+          "mana_reward": 8,
+          "gold_reward": 2
         }
       ],
       "completion_xp": 200,

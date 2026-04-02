@@ -19,8 +19,11 @@
           "prompt_en": "The shadow speaks in your grandmother's voice: 'You should never have come here. Go back!' — stand your ground in German.",
           "example_answer": "Ich werde nicht gehen. Ich bin hierher gekommen, weil du meine Familie verflucht hast. Das muss enden.",
           "grammar_focus": "future with werden, weil clause, Perfekt",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c8_q2",
@@ -28,8 +31,11 @@
           "prompt_en": "Fix: 'Der Fluch kann nicht gebrochen werden ohne das Mut des Kriegers.'",
           "correct_de": "Der Fluch kann nicht gebrochen werden ohne den Mut des Kriegers.",
           "grammar_focus": "accusative den after ohne, genitive des Kriegers",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 4,
+          "item_reward": null,
+          "tier": 2,
+          "mana_reward": 4,
+          "gold_reward": 0
         },
         {
           "id": "c8_q3",
@@ -37,8 +43,11 @@
           "prompt_en": "Translate: 'Although I am afraid, I will not run away.'",
           "correct_de": "Obwohl ich Angst habe, werde ich nicht weglaufen.",
           "grammar_focus": "obwohl subordinate clause, separable verb weglaufen",
-          "xp_reward": 20,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c8_q4",
@@ -48,8 +57,11 @@
           "prompt_en": "The shadow towers over you: 'You are weak! Your fear belongs to me!' — reject this in German. Use at least one modal verb and one connective.",
           "example_answer": "Nein! Meine Angst gehört mir, aber ich lasse sie nicht mich beherrschen. Ich muss stark sein, weil das Dorf auf mich zählt.",
           "grammar_focus": "modal verb lassen, weil clause, dative mich as object",
-          "xp_reward": 25,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c8_q5",
@@ -57,8 +69,11 @@
           "prompt_en": "Reconstruct: 'hätte / Wenn / den Pakt / nicht / geschlossen / meine Grossmutter / wäre / der Fluch / gebrochen'",
           "correct_de": "Wenn meine Grossmutter den Pakt nicht geschlossen hätte, wäre der Fluch gebrochen.",
           "grammar_focus": "past Konjunktiv II: hätte geschlossen, wäre gebrochen",
-          "xp_reward": 25,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c8_q6",
@@ -68,8 +83,11 @@
           "prompt_en": "The shadow shrinks back, confused: 'Why do you fight for people who don't even know you?' — answer with conviction in German.",
           "example_answer": "Ich kämpfe für sie, weil es das Richtige ist. Man muss nicht jemanden kennen, um ihm zu helfen. Das hat mir Brunhilde gelehrt.",
           "grammar_focus": "weil clause, indefinite pronoun man, dative ihm after helfen",
-          "xp_reward": 30,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c8_q7",
@@ -78,8 +96,11 @@
           "prompt_de": "Der Schatten will dich verstehen, bevor er nachgibt. Schreibe mindestens 80 Wörter auf Deutsch: Beschreibe wer du bist, was dich in diesen Wald gebracht hat, was du auf deiner Reise gelernt hast, und warum du verdienst, den Fluch zu brechen.",
           "min_words": 80,
           "grammar_focus": "long-form writing — mixed tenses, Konjunktiv II, argumentation, self-expression",
-          "xp_reward": 100,
-          "item_reward": null
+          "xp_reward": 12,
+          "item_reward": null,
+          "tier": 6,
+          "mana_reward": 12,
+          "gold_reward": 4
         }
       ],
       "completion_xp": 250,
@@ -101,8 +122,11 @@
           "prompt_en": "The wounded spirit whispers: 'I did not choose your family. Wotan forced me. Please... free me.' — respond in German. Show empathy or rejection — your choice.",
           "example_answer": "Ich verstehe deinen Schmerz. Du hast gelitten, genau wie wir. Ich werde dich befreien, nicht aus Schwäche, sondern aus Stärke.",
           "grammar_focus": "Perfekt tense, comparison, future werden",
-          "xp_reward": 30,
-          "item_reward": null
+          "xp_reward": 6,
+          "item_reward": null,
+          "tier": 3,
+          "mana_reward": 6,
+          "gold_reward": 1
         },
         {
           "id": "c9_q2",
@@ -110,8 +134,11 @@
           "prompt_en": "Final choice — write 2-3 sentences in German explaining your decision: Rache (destroy the Waldwächter) or Vergebung (free him). There is no wrong answer — only your German must be correct.",
           "prompt_de": "Deine Entscheidung: Rache oder Vergebung? Erkläre deine Wahl auf Deutsch in 2-3 Sätzen.",
           "grammar_focus": "free writing — mixed structures, coherent argument",
-          "xp_reward": 50,
-          "item_reward": "Grammatikrolle"
+          "xp_reward": 8,
+          "item_reward": "Grammatikrolle",
+          "tier": 4,
+          "mana_reward": 8,
+          "gold_reward": 2
         }
       ],
       "completion_xp": 500,

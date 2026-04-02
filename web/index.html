@@ -854,6 +854,28 @@ function deleteSlotMeta(slot) {
   localStorage.setItem(SLOTS_KEY, JSON.stringify(slots));
 }
 
+const XP_TITLES = [
+  [0,    "Wandernder Krieger"],
+  [100,  "Gezeichneter Krieger"],
+  [250,  "Runenkrieger"],
+  [500,  "Sturmhüter"],
+  [900,  "Flammenritter"],
+  [1500, "Schattenfürst"],
+  [2300, "Runenfürst"],
+  [3500, "Aschenfürst"],
+  [5000, "Weltenhüter"],
+  [7000, "Legendenfürst"],
+];
+
+function getTitle(xp) {
+  let title = XP_TITLES[0][1];
+  for (const [threshold, name] of XP_TITLES) {
+    if (xp >= threshold) title = name;
+    else break;
+  }
+  return title;
+}
+
 const ITEM_ICONS = {
   "Schwert": "⚔️", "Stab": "🪄", "Bogen": "🏹",
   "Runentafel": "🪨", "Offenbarungsstein": "💎",
@@ -894,6 +916,7 @@ function TopBar({ state }) {
   return (
     <div className="top-bar">
       <span className="player-name cinzel">⚔ {state.player_name}</span>
+      <span style={{fontSize:10,color:"var(--gold-dim)",fontFamily:"Cinzel,serif",letterSpacing:"0.06em"}}>{getTitle(state.xp||0)}</span>
       <span className="top-stat">
         <span className="level-val cinzel">Lvl {state.level}</span>
         <span style={{color:"var(--text-dim)",fontSize:11}}>({cefr})</span>
@@ -903,6 +926,7 @@ function TopBar({ state }) {
         <span style={{color:"var(--text-dim)"}}>/{state.mana_max}</span>
       </span>
       <span className="top-stat">🔥 <span className="streak-val">{state.streak}d</span></span>
+      <span className="top-stat">🪙 <span className="gold-val">{state.gold || 0}</span></span>
 
     </div>
   );
@@ -1211,11 +1235,14 @@ function GameScreen({ initialState, onNewGame }) {
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [phase, setPhase] = useState("loading"); // loading|narration|challenge|flashcard|epilogue
+  const [phase, setPhase] = useState("loading");
   const [modal, setModal] = useState(null);
   const [scrollWord, setScrollWord] = useState("");
   const [epilogue, setEpilogue] = useState(null);
+  const [chapterEarnings, setChapterEarnings] = useState({xp:0,mana:0,gold:0});
+  const [actTransition, setActTransition] = useState(null);
   const inputRef = useRef(null);
+  const autoAdvanceTimer = useRef(null);
 
   // Load chapter on mount and after chapter changes
   useEffect(() => {
@@ -1233,6 +1260,7 @@ function GameScreen({ initialState, onNewGame }) {
       setChapter(r.chapter);
       setNarration(r.narration || "");
       setDiary(r.diary || "");
+      setChapterEarnings({xp:0, mana:0, gold:0});
       const chals = r.chapter.challenges || [];
       // Inject diary into leseverstehen
       const injected = chals.map(c =>
@@ -1292,18 +1320,34 @@ function GameScreen({ initialState, onNewGame }) {
         diary_entry:            chal._diary_entry || "",
         leseverstehen_question: chal.leseverstehen_question || "",
         challenge_index:        chalIdx,
+        tier:                   chal.tier || 3,
       });
 
       setState(r.state);
       setResult(r);
 
-      // Save progress immediately on correct answer so refresh resumes here
+      // Accumulate chapter earnings
+      if (r.correct) {
+        setChapterEarnings(e => ({
+          xp:   e.xp   + (r.xp_gained   || 0),
+          mana: e.mana + (r.mana_gained  || 0),
+          gold: e.gold + (r.gold_gained  || 0),
+        }));
+      }
+
+      // Save progress immediately on correct answer
       if (r.correct) {
         api("/api/answer", "POST", {
           challenge_id: "__progress__", challenge_type: "__save__",
           prompt_en: "", player_answer: "__save__",
-          challenge_index: chalIdx + 1,
+          challenge_index: chalIdx + 1, tier: 1,
         }).catch(()=>{});
+
+        // Auto-advance Tier 1 challenges after 1.5s
+        const tier = chal.tier || 3;
+        if (tier === 1) {
+          autoAdvanceTimer.current = setTimeout(() => advanceChallenge(), 1500);
+        }
       }
 
       if (r.correct && chal.item_reward) {
@@ -1322,6 +1366,11 @@ function GameScreen({ initialState, onNewGame }) {
   }
 
   async function advanceChallenge() {
+    // Cancel any pending auto-advance timer
+    if (autoAdvanceTimer.current) {
+      clearTimeout(autoAdvanceTimer.current);
+      autoAdvanceTimer.current = null;
+    }
     if (!result?.correct) {
       setResult(null);
       setAnswer("");
@@ -1330,12 +1379,6 @@ function GameScreen({ initialState, onNewGame }) {
 
     const next = chalIdx + 1;
     if (next < challenges.length) {
-      // Save progress so refresh resumes here
-      await api("/api/answer", "POST", {
-        challenge_id: "__progress__", challenge_type: "__save__",
-        prompt_en: "", player_answer: "__save__",
-        challenge_index: next,
-      }).catch(()=>{});
       setChalIdx(next);
       setResult(null);
       setAnswer("");
@@ -1352,19 +1395,41 @@ function GameScreen({ initialState, onNewGame }) {
       const r = await api("/api/complete-chapter", "POST", {
         completion_xp:  chapter.completion_xp || 50,
         next_chapter:   chapter.unlocks_chapter || null,
-        next_act:       chapter.unlocks_chapter ? state.act : null,
         chapter:        chapter.chapter,
         ending_answer:  lastAnswer,
       });
       setState(r.state);
+
+      // Add completion XP to earnings display
+      const totalEarnings = {
+        xp:   chapterEarnings.xp   + (chapter.completion_xp || 50),
+        mana: chapterEarnings.mana,
+        gold: chapterEarnings.gold,
+      };
+
       if (r.epilogue) {
         setEpilogue(r);
         setPhase("epilogue");
       } else if (!chapter.unlocks_chapter) {
         setPhase("act-end");
       } else {
-        // Load next chapter using updated state (act may have changed)
-        loadChapter(r.state.episode, r.state.act, r.state.chapter);
+        // Check if act changed → show act transition
+        const nextAct = r.state.act;
+        const prevAct = state.act;
+        if (nextAct !== prevAct) {
+          setActTransition({
+            prevAct, nextAct,
+            earnings: totalEarnings,
+            nextState: r.state,
+          });
+          setPhase("act-transition");
+        } else {
+          setPhase("chapter-complete");
+          // Show chapter complete for 2s then load next
+          setTimeout(() => {
+            loadChapter(r.state.episode, r.state.act, r.state.chapter);
+          }, 2500);
+        }
       }
     } catch(e) {
       setPhase("act-end");
@@ -1604,6 +1669,82 @@ function GameScreen({ initialState, onNewGame }) {
     </div>
   );
 
+  if (phase === "chapter-complete") return (
+    <div className="screen" style={{justifyContent:"center",alignItems:"center",textAlign:"center",padding:24}}>
+      <div style={{fontSize:36,marginBottom:12}}>⚔️</div>
+      <div className="cinzel" style={{color:"var(--gold2)",fontSize:20,marginBottom:16,
+        textShadow:"0 0 20px rgba(232,184,106,0.4)"}}>
+        {chapter?.title}
+      </div>
+      <div className="cinzel" style={{color:"var(--text-dim)",fontSize:10,
+        letterSpacing:"0.2em",marginBottom:20}}>KAPITEL ABGESCHLOSSEN</div>
+      <div style={{display:"flex",gap:20,justifyContent:"center",marginBottom:8}}>
+        <div style={{textAlign:"center"}}>
+          <div style={{color:"var(--gold2)",fontSize:18,fontFamily:"Cinzel,serif"}}>
+            +{chapterEarnings.xp + (chapter?.completion_xp||50)}
+          </div>
+          <div style={{color:"var(--text-dim)",fontSize:11}}>XP</div>
+        </div>
+        <div style={{textAlign:"center"}}>
+          <div style={{color:"var(--purple2)",fontSize:18,fontFamily:"Cinzel,serif"}}>
+            +{chapterEarnings.mana}
+          </div>
+          <div style={{color:"var(--text-dim)",fontSize:11}}>Mana</div>
+        </div>
+        {chapterEarnings.gold > 0 && (
+          <div style={{textAlign:"center"}}>
+            <div style={{color:"var(--gold)",fontSize:18,fontFamily:"Cinzel,serif"}}>
+              +{chapterEarnings.gold}
+            </div>
+            <div style={{color:"var(--text-dim)",fontSize:11}}>Gold</div>
+          </div>
+        )}
+      </div>
+      <div className="loading-text cinzel" style={{marginTop:16}}>
+        NÄCHSTES KAPITEL LÄDT...
+      </div>
+    </div>
+  );
+
+  if (phase === "act-transition" && actTransition) return (
+    <div className="screen" style={{justifyContent:"center",alignItems:"center",
+      textAlign:"center",padding:24}}>
+      <div className="rune-divider" style={{fontSize:24,marginBottom:20}}>ᚠ ᚢ ᚦ ᚨ ᚱ</div>
+      <div className="cinzel" style={{color:"var(--text-dim)",fontSize:10,
+        letterSpacing:"0.25em",marginBottom:8}}>AKT {actTransition.prevAct} ABGESCHLOSSEN</div>
+      <div className="cinzel" style={{color:"var(--gold2)",fontSize:22,marginBottom:24,
+        textShadow:"0 0 20px rgba(232,184,106,0.4)"}}>
+        {actTransition.prevAct === 1 ? "Die Ankunft" :
+         actTransition.prevAct === 2 ? "Die Suche" : "Der Höhepunkt"}
+      </div>
+      <div style={{display:"flex",gap:24,justifyContent:"center",marginBottom:24}}>
+        {[
+          [actTransition.earnings.xp, "XP", "var(--gold2)"],
+          [actTransition.earnings.mana, "Mana", "var(--purple2)"],
+          [actTransition.earnings.gold, "Gold", "var(--gold)"],
+        ].map(([val, label, color]) => val > 0 && (
+          <div key={label} style={{textAlign:"center"}}>
+            <div style={{color, fontSize:20, fontFamily:"Cinzel,serif"}}>+{val}</div>
+            <div style={{color:"var(--text-dim)",fontSize:11}}>{label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{color:"var(--text-dim)",fontSize:13,fontStyle:"italic",marginBottom:24}}>
+        {actTransition.nextAct === 2 ? "Die Suche beginnt..." :
+         actTransition.nextAct === 3 ? "Der Höhepunkt naht..." : ""}
+      </div>
+      <button className="start-btn cinzel" style={{maxWidth:280}}
+        onClick={() => {
+          setActTransition(null);
+          loadChapter(actTransition.nextState.episode,
+                      actTransition.nextState.act,
+                      actTransition.nextState.chapter);
+        }}>
+        AKT {actTransition.nextAct} BEGINNEN →
+      </button>
+    </div>
+  );
+
   if (phase === "narration") return (
     <div className="screen">
       <TopBar state={state} />
@@ -1624,11 +1765,17 @@ function GameScreen({ initialState, onNewGame }) {
       <InventoryPanel state={state} onItemClick={item =>
         setModal({ title: `${ITEM_ICONS[item]||"📦"} ${item}`, content: "" })} />
 
-      <div className="cmd-bar">
+      <div className="cmd-bar" style={{gap:8}}>
         <button className="submit-btn cinzel"
-          style={{margin:"8px 16px",width:"calc(100% - 32px)"}}
+          style={{flex:2}}
           onClick={() => setPhase("challenge")}>
           HERAUSFORDERUNG BEGINNEN →
+        </button>
+        <button className="submit-btn cinzel"
+          style={{flex:1, background:"linear-gradient(180deg,var(--stone2),var(--bg3))",
+                  color:"var(--text-dim)", border:"1px solid var(--border)"}}
+          onClick={() => setPhase("challenge")}>
+          ÜBERSPRINGEN
         </button>
       </div>
     </div>
@@ -1645,7 +1792,7 @@ function GameScreen({ initialState, onNewGame }) {
           {result.correct ? (
             <div className="result-box result-correct">
               <span className="result-icon">✔</span>
-              Richtig! +{result.xp_gained||0} XP
+  Richtig! +{result.xp_gained||0} XP  💠+{result.mana_gained||0}  {result.gold_gained>0 ? `🪙+${result.gold_gained}` : ""}
               {result.levelled_up && (
                 <div style={{color:"var(--gold2)",marginTop:4}}>
                   🎉 LEVEL UP! Level {state.level}!
@@ -1684,22 +1831,44 @@ function GameScreen({ initialState, onNewGame }) {
             </div>
           )}
 
-          <button className="submit-btn" onClick={advanceChallenge}
-            style={{marginTop:10,
-              background: result.correct
-                ? "linear-gradient(135deg,var(--green),#2a8a52)"
-                : "linear-gradient(135deg,var(--red),#8a2020)"}}>
-            {result.correct
-              ? (chalIdx+1 < challenges.length ? "WEITER →" : "KAPITEL ABSCHLIESSEN")
-              : "NOCHMAL VERSUCHEN"}
-          </button>
+          {/* Tier 1 auto-advances — hide WEITER button */}
+          {(challenges[chalIdx]?.tier || 3) > 1 || !result.correct ? (
+            <button className="submit-btn" onClick={advanceChallenge}
+              style={{marginTop:10,
+                background: result.correct
+                  ? "linear-gradient(135deg,var(--green),#2a8a52)"
+                  : "linear-gradient(135deg,var(--red),#8a2020)"}}>
+              {result.correct
+                ? (chalIdx+1 < challenges.length ? "WEITER →" : "KAPITEL ABSCHLIESSEN")
+                : "NOCHMAL VERSUCHEN"}
+            </button>
+          ) : (
+            <div className="loading-text cinzel" style={{marginTop:8,fontSize:10}}>
+              WEITER...
+            </div>
+          )}
         </div>
       )}
 
       {!result && chal && (
         <div className="panel">
-          <div className="panel-title">
-            ⚔ {chapter?.title} — {chalIdx+1}/{challenges.length}
+          <div className="panel-title" style={{flexDirection:"column",alignItems:"flex-start",gap:4}}>
+            <span>⚔ {chapter?.title}</span>
+            <div style={{display:"flex",gap:4,marginTop:2}}>
+              {challenges.map((c,i) => (
+                <span key={i} style={{
+                  width:8,height:8,borderRadius:"50%",display:"inline-block",
+                  background: i < chalIdx ? "var(--green)" :
+                              i === chalIdx ? "var(--gold)" : "var(--border)",
+                  border: `1px solid ${i === chalIdx ? "var(--gold2)" : "transparent"}`,
+                  boxShadow: i === chalIdx ? "0 0 4px var(--gold)" : "none",
+                }}/>
+              ))}
+              <span style={{fontSize:10,color:"var(--text-dim)",marginLeft:4,
+                fontFamily:"Cinzel,serif",letterSpacing:"0.05em"}}>
+                {chalIdx+1}/{challenges.length}
+              </span>
+            </div>
           </div>
 
           {/* Diary entry for leseverstehen */}
@@ -1778,19 +1947,18 @@ function GameScreen({ initialState, onNewGame }) {
 
       {/* Command Bar */}
       <div className="cmd-bar">
-        <button className="cmd-btn cinzel" onClick={() => handleCommand("/stein")}
-          disabled={hintsLeft <= 0}>
-          💎 STEIN {hintsLeft > 0 ? `(${hintsLeft})` : "(0)"}
+        <button className="cmd-btn cinzel" onClick={() => handleCommand("/stein")}>
+          💎 STEIN ·3
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/portal")}
           >
-          🌌 PFORTE ·30
+          🌌 PFORTE ·9+2🪙
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/translate")}>
-          🌀 ZUNGENGABE
+          🌀 ZUNGENGABE ·6
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/erkläre")}>
-          👁 WEISSAGUNG
+          👁 WEISSAGUNG ·6+1🪙
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/diary")}>
           📖 TAGEBUCH
@@ -1954,7 +2122,14 @@ function App() {
       }
       setChecking(false);
     }).catch(() => setChecking(false));
-    api("/api/streak", "POST").catch(() => {});
+    api("/api/streak", "POST").then(r => {
+      if (r && r.streak > 0 && r.streak % 5 === 0) {
+        // 5-day streak reward notification
+        setTimeout(() => {
+          alert(`🔥 ${r.streak}-Tage-Streak! Du erhältst +20 Gold als Belohnung!`);
+        }, 2000);
+      }
+    }).catch(() => {});
   }, []);
 
   function handleLoad(slot) {

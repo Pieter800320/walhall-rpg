@@ -30,20 +30,20 @@ class GameState(BaseModel):
     xp: int = 0
     xp_to_next: int = 100
 
-    # Resources
-    mana: int = 100
+    # Resources — starting values for new game
+    mana: int = 60
     mana_max: int = 100
-    gold: int = 0
+    gold: int = 5
 
     # Stats
     streak: int = 0
-    last_played: Optional[str] = None   # ISO date string e.g. "2026-03-29"
-    accuracy_total: int = 0             # cumulative correct answers
-    accuracy_attempts: int = 0          # cumulative attempts
+    last_played: Optional[str] = None
+    accuracy_total: int = 0
+    accuracy_attempts: int = 0
 
-    # Revelation Stone (hint) tracking — resets each chapter
+    # Chapter hints — now just a counter, no free uses
     chapter_hints_used: int = 0
-    hints_per_chapter: int = 3        # max free hints per chapter
+    hints_per_chapter: int = 0   # 0 = no free hints, all cost Mana
 
     # Gambling dice state — active means next correct answer gets 2x XP
     dice_active: bool = False

@@ -42,8 +42,10 @@ SAVE_DIR  = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 
 def get_save_path(slot: str = "default") -> str:
     """Return the save file path for a given slot."""
-    # Sanitise slot name to prevent path traversal
     safe = "".join(c for c in slot if c.isalnum() or c in "_-")[:40] or "default"
+    # Default slot uses the original filename for backward compatibility
+    if safe == "default":
+        return os.path.join(SAVE_DIR, "save_state.json")
     return os.path.join(SAVE_DIR, f"save_{safe}.json")
 
 def load_state_slot(slot: str = "default"):
@@ -106,6 +108,7 @@ class AnswerRequest(BaseModel):
     diary_entry: str = ""
     leseverstehen_question: str = ""
     challenge_index: int = 0
+    tier: int = 3
     slot: str = "default"
 
 class CommandRequest(BaseModel):
@@ -174,6 +177,9 @@ def new_game(req: NewGameRequest):
         player_name=req.player_name,
         cefr_preference=req.cefr_preference,
         last_played=str(date.today()),
+        mana=60,
+        mana_max=100,
+        gold=5,
     )
     save_state_slot(state, req.slot)
     return {"state": state.model_dump()}
@@ -234,11 +240,15 @@ def magic_portal(body: dict):
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
 
-    PORTAL_COST = 30
-    if state.mana < PORTAL_COST:
-        return {"success": False, "message": f"Nicht genug Mana. Du brauchst {PORTAL_COST} Mana."}
+    PORTAL_COST_MANA = 9
+    PORTAL_COST_GOLD = 2
+    if state.mana < PORTAL_COST_MANA:
+        return {"success": False, "message": f"Nicht genug Mana. Pforte kostet {PORTAL_COST_MANA} Mana."}
+    if state.gold < PORTAL_COST_GOLD:
+        return {"success": False, "message": f"Nicht genug Gold. Pforte kostet {PORTAL_COST_GOLD} Gold."}
 
-    state.mana -= PORTAL_COST
+    state.mana -= PORTAL_COST_MANA
+    state.gold -= PORTAL_COST_GOLD
     correct_answer = body.get("correct_answer", "")
     xp_reward = body.get("xp_reward", 10)
     grammar_focus = body.get("grammar_focus", "")
@@ -307,20 +317,29 @@ def submit_answer(req: AnswerRequest):
             req.player_answer, state.cefr_preference
         )
 
-    # XP and state update
+    # XP, Mana, Gold rewards from tier
     xp_gained = 0
+    mana_gained = 0
+    gold_gained = 0
     levelled_up = False
 
     if result["correct"]:
         state.accuracy_total += 1
+        tier = req.tier if hasattr(req, 'tier') else 3
         multiplier = get_active_multiplier(state)
         if state.dice_active:
             multiplier *= 2.0
             state.dice_active = False
-        xp = calculate_answer_xp(True, False, 0, multiplier)
-        xp_result = award_xp(state, xp)
-        xp_gained = xp
+
+        xp_gained   = max(1, int(tier * 2 * multiplier))
+        mana_gained  = tier * 2
+        gold_gained  = max(0, tier - 2)
+
+        xp_result   = award_xp(state, xp_gained)
         levelled_up = xp_result["levelled_up"]
+        state.mana  = min(state.mana + mana_gained, state.mana_max)
+        state.gold += gold_gained
+
         if req.grammar_focus:
             log_correct(req.grammar_focus)
         # Update skill scores
@@ -339,9 +358,11 @@ def submit_answer(req: AnswerRequest):
 
     return {
         **result,
-        "xp_gained": xp_gained,
+        "xp_gained":   xp_gained,
+        "mana_gained":  mana_gained,
+        "gold_gained":  gold_gained,
         "levelled_up": levelled_up,
-        "state": state.model_dump(),
+        "state":       state.model_dump(),
     }
 
 
@@ -355,23 +376,32 @@ def handle_command(req: CommandRequest):
     cmd = req.command
 
     if cmd == "/stein":
-        hints_left = state.hints_per_chapter - state.chapter_hints_used
-        if hints_left <= 0:
-            return {"success": False, "message": "Keine Hinweise mehr in diesem Kapitel."}
-        state.chapter_hints_used += 1
-        save_state(state)
+        if state.mana < 3:
+            return {"success": False, "message": "Nicht genug Mana. Stein kostet 3 Mana."}
+        state.mana -= 3
+        save_state_slot(state, req.slot)
         hint = get_hint(state.player_name, req.prompt_en, state.cefr_preference)
-        return {"success": True, "result": hint, "hints_remaining": hints_left - 1,
-                "state": state.model_dump()}
+        return {"success": True, "result": hint, "state": state.model_dump()}
 
     if cmd == "/translate":
-        if not spend_mana(state, "/translate"):
-            return {"success": False, "message": "Nicht genug Mana (15 benötigt)."}
+        if state.mana < 6:
+            return {"success": False, "message": "Nicht genug Mana. Zungengabe kostet 6 Mana."}
+        state.mana -= 6
+        save_state_slot(state, req.slot)
         return {"success": True, "state": state.model_dump()}
 
     if cmd == "/erkläre":
-        if not spend_mana(state, "/erkläre"):
-            return {"success": False, "message": "Nicht genug Mana (20 benötigt)."}
+        if state.mana < 6:
+            return {"success": False, "message": "Nicht genug Mana. Weissagung kostet 6 Mana."}
+        if state.gold >= 1:
+            state.mana -= 6
+            state.gold -= 1
+        else:
+            # No gold — costs double mana instead
+            if state.mana < 12:
+                return {"success": False, "message": "Kein Gold verfügbar. Weissagung kostet dann 12 Mana."}
+            state.mana -= 12
+        save_state_slot(state, req.slot)
         explanation = explain_grammar(
             state.player_name, req.grammar_focus, req.example_answer
         )
@@ -395,7 +425,7 @@ def handle_command(req: CommandRequest):
             state.dice_active = True
         else:
             state.mana = max(0, state.mana - 15)
-        save_state(state)
+        save_state_slot(state, req.slot)
         return {"success": True, "won": won, "state": state.model_dump()}
 
     if cmd == "/level":
@@ -407,7 +437,8 @@ def handle_command(req: CommandRequest):
 @app.post("/api/set-level")
 def set_level(body: dict):
     """Update the player's CEFR preference."""
-    state = load_state_slot(req.slot)
+    slot = body.get("slot", "default")
+    state = load_state_slot(slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     state.cefr_preference = body.get("cefr", "B2")
@@ -535,8 +566,13 @@ def update_streak():
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     today = str(date.today())
+    streak_reward = 0
     if state.last_played != today:
         state.streak += 1
         state.last_played = today
+        # Every 5 days — Gold bonus
+        if state.streak % 5 == 0:
+            state.gold += 20
+            streak_reward = 20
         save_state_slot(state, slot)
-    return {"streak": state.streak, "state": state.model_dump()}
+    return {"streak": state.streak, "streak_reward": streak_reward, "state": state.model_dump()}
