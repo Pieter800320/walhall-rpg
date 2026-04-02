@@ -109,6 +109,7 @@ class AnswerRequest(BaseModel):
     leseverstehen_question: str = ""
     challenge_index: int = 0
     tier: int = 3
+    item_reward: str = ""
     slot: str = "default"
 
 class CommandRequest(BaseModel):
@@ -231,12 +232,9 @@ def get_chapter(episode: int, act: int, chapter: int, slot: str = "default"):
 
 @app.post("/api/magic-portal")
 def magic_portal(body: dict):
+    """Reveal the correct answer. Costs 9 Mana + 2 Gold."""
     slot = body.get("slot","default")
-    """
-    Reveal the correct answer and mark the challenge as passed.
-    Costs 30 Mana. Awards half normal XP.
-    """
-    state = load_state_slot(req.slot)
+    state = load_state_slot(slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
 
@@ -340,6 +338,9 @@ def submit_answer(req: AnswerRequest):
         state.mana  = min(state.mana + mana_gained, state.mana_max)
         state.gold += gold_gained
 
+        # Add item reward to inventory
+        if req.item_reward and req.item_reward not in state.inventory:
+            state.inventory.append(req.item_reward)
         if req.grammar_focus:
             log_correct(req.grammar_focus)
         # Update skill scores
@@ -447,9 +448,9 @@ def set_level(body: dict):
 
 
 @app.get("/api/diary")
-def get_diary():
+def get_diary(slot: str = "default"):
     """Return all diary entries for episode 1."""
-    state = load_state_slot(req.slot)
+    state = load_state_slot(slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     entries = get_all_entries_text(state.episode)
@@ -487,7 +488,8 @@ def evaluate_card(req: FlashcardAnswerRequest):
 @app.post("/api/flashcards/complete")
 def complete_flashcards(body: dict):
     """Award Mana for completing a flashcard round."""
-    state = load_state_slot(req.slot)
+    slot = body.get("slot","default")
+    state = load_state_slot(slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     correct = body.get("correct", 0)
@@ -511,7 +513,8 @@ def reset_game(body: dict = {}):
 @app.post("/api/complete-chapter")
 def complete_chapter(body: dict):
     """Award completion XP and advance chapter."""
-    state = load_state_slot(req.slot)
+    slot = body.get("slot","default")
+    state = load_state_slot(slot)
     if not state:
         raise HTTPException(status_code=404, detail="No save state")
     completion_xp   = body.get("completion_xp", 50)
@@ -572,7 +575,7 @@ def update_streak():
         state.last_played = today
         # Every 5 days — Gold bonus
         if state.streak % 5 == 0:
-            state.gold += 20
-            streak_reward = 20
+            state.gold += 10
+            streak_reward = 10
         save_state_slot(state, slot)
     return {"streak": state.streak, "streak_reward": streak_reward, "state": state.model_dump()}

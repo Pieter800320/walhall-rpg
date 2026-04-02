@@ -876,6 +876,28 @@ function getTitle(xp) {
   return title;
 }
 
+const ITEM_DESCRIPTIONS = {
+  "Schwert":           "+20% XP auf alle korrekten Antworten",
+  "Stab":              "+10 Mana Regeneration pro Kapitel",
+  "Bogen":             "Schnellere XP-Gewinne bei einfachen Aufgaben",
+  "Runentafel":        "Zugang zu Vokabel-Karteikarten",
+  "Offenbarungsstein": "Drei extra Stein-Hinweise pro Kapitel",
+  "Glückswürfel":      "55% Chance auf 2× XP — oder -15 Mana",
+  "Ältere Schriftrolle":"Deutsches Wörterbuch jederzeit verfügbar",
+  "Grammatikrolle":    "+15% Grammatik-Skill pro korrekter Antwort",
+  "Runenstein":        "+5% XP auf alle korrekten Antworten",
+  "Wotan's Auge":      "Zeigt die Schwierigkeit jeder Aufgabe an",
+  "Dämmerklinge":      "+15% XP auf alle korrekten Antworten",
+};
+
+const TOOL_INFO = [
+  { name: "Stein",       icon: "💎", cost: "3 Mana",         desc: "Flüstert einen Grammatikhinweis auf Deutsch" },
+  { name: "Zungengabe",  icon: "🌀", cost: "6 Mana",         desc: "Übersetzt die Aufgabe ins Englische" },
+  { name: "Weissagung",  icon: "👁",  cost: "6 Mana + 1 Gold", desc: "Brunhilde erklärt die Grammatik auf Deutsch" },
+  { name: "Pforte",      icon: "🌌", cost: "9 Mana + 2 Gold", desc: "Enthüllt die Antwort und überspringt die Aufgabe" },
+  { name: "Tagebuch",    icon: "📖", cost: "Kostenlos",       desc: "Dein persönliches Tagebuch aller Ereignisse" },
+];
+
 const ITEM_ICONS = {
   "Schwert": "⚔️", "Stab": "🪄", "Bogen": "🏹",
   "Runentafel": "🪨", "Offenbarungsstein": "💎",
@@ -909,112 +931,172 @@ async function api(path, method = "GET", body = null) {
 }
 
 // ── Top Bar ───────────────────────────────────────────────────
-function TopBar({ state }) {
+function TopBar({ state, onLevelChange }) {
   if (!state) return null;
   const cefr = ["A1","A2","B1","B2","C1"].includes(state.cefr_preference)
     ? state.cefr_preference : "B2";
-  return (
-    <div className="top-bar">
-      <span className="player-name cinzel">⚔ {state.player_name}</span>
-      <span style={{fontSize:10,color:"var(--gold-dim)",fontFamily:"Cinzel,serif",letterSpacing:"0.06em"}}>{getTitle(state.xp||0)}</span>
-      <span className="top-stat">
-        <span className="level-val cinzel">Lvl {state.level}</span>
-        <span style={{color:"var(--text-dim)",fontSize:11}}>({cefr})</span>
-      </span>
-      <span className="top-stat">
-        💠 <span className="mana-val">{state.mana}</span>
-        <span style={{color:"var(--text-dim)"}}>/{state.mana_max}</span>
-      </span>
-      <span className="top-stat">🔥 <span className="streak-val">{state.streak}d</span></span>
-      <span className="top-stat">🪙 <span className="gold-val">{state.gold || 0}</span></span>
-
-    </div>
-  );
-}
-
-// ── Stats Panel ───────────────────────────────────────────────
-function StatsPanel({ state }) {
-  const [open, setOpen] = useState(false);
-  if (!state) return null;
   const xpPct = Math.min(100, Math.round((state.xp / Math.max(state.xp_to_next,1)) * 100));
+  const [showLevel, setShowLevel] = React.useState(false);
 
   return (
-    <div className="panel">
-      <div className="stats-toggle" onClick={() => setOpen(!open)}>
-        <div className="panel-title" style={{marginBottom:0}}>⚡ Fortschritt</div>
-        <div className="xp-inline">
-          <div className="bar-track" style={{width:70}}>
-            <div className="bar-fill bar-gold" style={{width:`${xpPct}%`}} />
-          </div>
-          <span style={{fontSize:11,color:"var(--text-dim)"}}>{state.xp}/{state.xp_to_next}</span>
-          <span style={{color:"var(--text-dim)",fontSize:14}}>{open?"▲":"▼"}</span>
+    <div className="top-bar" style={{flexDirection:"column",gap:6,padding:"8px 12px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",width:"100%"}}>
+        <span className="player-name cinzel">⚔ {state.player_name}</span>
+        <span style={{fontSize:9,color:"var(--gold-dim)",fontFamily:"Cinzel,serif",
+          letterSpacing:"0.08em",textTransform:"uppercase"}}>{getTitle(state.xp||0)}</span>
+        <span className="top-stat" style={{marginLeft:"auto"}}>
+          💠 <span className="mana-val">{state.mana}</span>
+          <span style={{color:"var(--text-dim)",fontSize:10}}>/{state.mana_max}</span>
+        </span>
+        <span className="top-stat">🪙 <span className="gold-val">{state.gold||0}</span></span>
+        <span className="top-stat">🔥 <span className="streak-val">{state.streak}d</span></span>
+        <button onClick={() => setShowLevel(s=>!s)}
+          style={{background:"var(--stone2)",border:"1px solid var(--border)",
+            borderRadius:2,color:"var(--blue2)",fontFamily:"Cinzel,serif",
+            fontSize:9,letterSpacing:"0.08em",padding:"3px 6px",cursor:"pointer"}}>
+          {cefr} ▾
+        </button>
+      </div>
+      {/* XP progress bar */}
+      <div style={{display:"flex",alignItems:"center",gap:6,width:"100%"}}>
+        <span style={{fontSize:9,color:"var(--text-dim)",fontFamily:"Cinzel,serif",
+          letterSpacing:"0.06em",whiteSpace:"nowrap"}}>
+          XP {state.xp}/{state.xp_to_next}
+        </span>
+        <div className="bar-track" style={{flex:1,height:4}}>
+          <div className="bar-fill bar-gold" style={{width:`${xpPct}%`}}/>
         </div>
       </div>
-
-      {open && (
-        <div style={{marginTop:12}}>
-          <div className="xp-section">
-            <div className="xp-label">
-              <span>XP</span>
-              <span>{state.xp} / {state.xp_to_next}</span>
-            </div>
-            <div className="bar-track">
-              <div className="bar-fill bar-gold" style={{width:`${xpPct}%`}} />
-            </div>
-          </div>
-
-          <div className="xp-label" style={{marginBottom:6}}>
-            <span>Genauigkeit</span>
-            <span style={{color:"var(--green2)"}}>{state.accuracy_pct}%</span>
-          </div>
-
-          {[
-            ["Wortschatz", state.skills?.vocabulary||0, "bar-blue"],
-            ["Grammatik",  state.skills?.grammar||0,    "bar-purple"],
-            ["Schreiben",  state.skills?.writing||0,    "bar-green"],
-          ].map(([label, val, cls]) => (
-            <div key={label} className="skill-row">
-              <span className="skill-label">{label}</span>
-              <div className="skill-bar bar-track">
-                <div className={`bar-fill ${cls}`}
-                  style={{width:`${Math.min(100,val)}%`}} />
-              </div>
-            </div>
+      {/* CEFR dropdown */}
+      {showLevel && (
+        <div style={{width:"100%",display:"flex",gap:4,flexWrap:"wrap"}}>
+          {["A1","A2","B1","B2","C1"].map(l => (
+            <button key={l}
+              style={{background: l===cefr ? "var(--stone2)" : "var(--bg3)",
+                border: `1px solid ${l===cefr ? "var(--gold-dim)" : "var(--border)"}`,
+                borderRadius:2, color: l===cefr ? "var(--gold2)" : "var(--text-dim)",
+                fontFamily:"Cinzel,serif",fontSize:10,padding:"4px 8px",cursor:"pointer"}}
+              onClick={() => { onLevelChange && onLevelChange(l); setShowLevel(false); }}>
+              {l}
+            </button>
           ))}
-
-          {state.mana !== undefined && (
-            <div className="skill-row" style={{marginTop:4}}>
-              <span className="skill-label" style={{color:"var(--purple2)"}}>Mana</span>
-              <div className="skill-bar bar-track">
-                <div className="bar-fill bar-mana"
-                  style={{width:`${Math.round(state.mana/state.mana_max*100)}%`}} />
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
   );
 }
 
-// ── Inventory Panel ───────────────────────────────────────────
-function InventoryPanel({ state, onItemClick }) {
+// ── Three Dropdown Panels ─────────────────────────────────────
+function ThreePanels({ state }) {
+  const [open, setOpen] = useState(null); // "stats"|"waffen"|"werkzeuge"
   if (!state) return null;
+  const toggle = (panel) => setOpen(o => o === panel ? null : panel);
+
+  const WEAPON_ITEMS = ["Schwert","Stab","Bogen","Runenstein","Dämmerklinge","Grammatikrolle","Wotan's Auge"];
+  const owned = state.inventory || [];
+  const ownedWeapons = owned.filter(i => WEAPON_ITEMS.includes(i));
+
   return (
-    <div className="panel">
-      <div className="panel-title">🗡 Inventar</div>
-      <div className="inventory-grid">
-        {state.inventory.map(item => (
-          <div key={item} className="inv-item" onClick={() => onItemClick(item)}
-               title={item}>
-            <span className="inv-icon">{ITEM_ICONS[item] || "📦"}</span>
-            <span style={{fontSize:9,letterSpacing:"0.03em"}}>{item}</span>
+    <div style={{margin:"0 8px",display:"flex",gap:4}}>
+      {/* STATS */}
+      <div style={{flex:1}}>
+        <button onClick={() => toggle("stats")}
+          style={{width:"100%",background:"var(--stone)",border:"1px solid var(--border)",
+            borderRadius:2,color: open==="stats" ? "var(--gold2)" : "var(--text-dim)",
+            fontFamily:"Cinzel,serif",fontSize:9,letterSpacing:"0.1em",
+            padding:"6px 4px",cursor:"pointer"}}>
+          ⚡ STATS {open==="stats"?"▲":"▼"}
+        </button>
+        {open==="stats" && (
+          <div style={{background:"var(--panel)",border:"1px solid var(--border)",
+            borderTop:"none",borderRadius:"0 0 2px 2px",padding:"10px 10px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",
+              fontSize:12,marginBottom:8,color:"var(--text-dim)"}}>
+              <span>Genauigkeit</span>
+              <span style={{color:"var(--green2)"}}>{state.accuracy_pct}%</span>
+            </div>
+            {[
+              ["Wortschatz", state.skills?.vocabulary||0, "bar-blue"],
+              ["Grammatik",  state.skills?.grammar||0,    "bar-purple"],
+              ["Schreiben",  state.skills?.writing||0,    "bar-green"],
+            ].map(([label, val, cls]) => (
+              <div key={label} className="skill-row">
+                <span className="skill-label" style={{fontSize:11}}>{label}</span>
+                <div className="skill-bar bar-track">
+                  <div className={`bar-fill ${cls}`} style={{width:`${Math.min(100,val)}%`}}/>
+                </div>
+                <span style={{fontSize:10,color:"var(--text-dim)",minWidth:24}}>{val}</span>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
+      </div>
+
+      {/* WAFFEN */}
+      <div style={{flex:1}}>
+        <button onClick={() => toggle("waffen")}
+          style={{width:"100%",background:"var(--stone)",border:"1px solid var(--border)",
+            borderRadius:2,color: open==="waffen" ? "var(--gold2)" : "var(--text-dim)",
+            fontFamily:"Cinzel,serif",fontSize:9,letterSpacing:"0.1em",
+            padding:"6px 4px",cursor:"pointer"}}>
+          ⚔ WAFFEN {open==="waffen"?"▲":"▼"}
+        </button>
+        {open==="waffen" && (
+          <div style={{background:"var(--panel)",border:"1px solid var(--border)",
+            borderTop:"none",borderRadius:"0 0 2px 2px",padding:"10px 10px"}}>
+            {ownedWeapons.length === 0 && (
+              <div style={{color:"var(--text-dim)",fontSize:12,fontStyle:"italic"}}>
+                Noch keine Waffen erworben.
+              </div>
+            )}
+            {ownedWeapons.map(item => (
+              <div key={item} style={{marginBottom:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                  <span style={{fontSize:16}}>{ITEM_ICONS[item]||"⚔"}</span>
+                  <span style={{color:"var(--gold2)",fontFamily:"Cinzel,serif",fontSize:11}}>{item}</span>
+                </div>
+                <div style={{fontSize:11,color:"var(--text-dim)",paddingLeft:22}}>
+                  {ITEM_DESCRIPTIONS[item]||""}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* WERKZEUGE */}
+      <div style={{flex:1}}>
+        <button onClick={() => toggle("werkzeuge")}
+          style={{width:"100%",background:"var(--stone)",border:"1px solid var(--border)",
+            borderRadius:2,color: open==="werkzeuge" ? "var(--gold2)" : "var(--text-dim)",
+            fontFamily:"Cinzel,serif",fontSize:9,letterSpacing:"0.1em",
+            padding:"6px 4px",cursor:"pointer"}}>
+          🗝 WERKZEUGE {open==="werkzeuge"?"▲":"▼"}
+        </button>
+        {open==="werkzeuge" && (
+          <div style={{background:"var(--panel)",border:"1px solid var(--border)",
+            borderTop:"none",borderRadius:"0 0 2px 2px",padding:"10px 10px"}}>
+            {TOOL_INFO.map(t => (
+              <div key={t.name} style={{marginBottom:8}}>
+                <div style={{display:"flex",justifyContent:"space-between",
+                  alignItems:"center",marginBottom:2}}>
+                  <span style={{color:"var(--gold2)",fontFamily:"Cinzel,serif",fontSize:11}}>
+                    {t.icon} {t.name}
+                  </span>
+                  <span style={{fontSize:10,color:"var(--amber)"}}>{t.cost}</span>
+                </div>
+                <div style={{fontSize:11,color:"var(--text-dim)"}}>{t.desc}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+// ── Inventory Panel (hidden — items shown in Waffen dropdown) ─
+function InventoryPanel({ state, onItemClick }) { return null; }
 
 // ── Modal ─────────────────────────────────────────────────────
 function Modal({ title, content, onClose, extra }) {
@@ -1321,6 +1403,7 @@ function GameScreen({ initialState, onNewGame }) {
         leseverstehen_question: chal.leseverstehen_question || "",
         challenge_index:        chalIdx,
         tier:                   chal.tier || 3,
+        item_reward:            chal.item_reward || "",
       });
 
       setState(r.state);
@@ -1465,7 +1548,7 @@ function GameScreen({ initialState, onNewGame }) {
       }
       else if (cmd === "/diary") {
         const r = await api("/api/diary");
-        setModal({ title: "📖 Grimnirs Tagebuch", content: r.entries });
+        setModal({ title: `📖 ${state.player_name}s Tagebuch`, content: r.entries });
       }
       if (cmd === "/translate") {
         const r = await api("/api/command", "POST", { command: "/translate" });
@@ -1572,7 +1655,7 @@ function GameScreen({ initialState, onNewGame }) {
 
   if (phase === "loading") return (
     <div className="screen">
-      <TopBar state={state} />
+      <TopBar state={state} onLevelChange={async (l) => { const r = await api("/api/set-level","POST",{cefr:l}); setState(r.state); }} />
       <div className="loading-text cinzel" style={{marginTop:40}}>
         BRUNHILDE BEREITET DIE GESCHICHTE VOR...
       </div>
@@ -1581,7 +1664,7 @@ function GameScreen({ initialState, onNewGame }) {
 
   if (phase === "act-end") return (
     <div className="screen">
-      <TopBar state={state} />
+      <TopBar state={state} onLevelChange={async (l) => { const r = await api("/api/set-level","POST",{cefr:l}); setState(r.state); }} />
       <div style={{padding:24,textAlign:"center"}}>
         <div style={{fontSize:32,marginBottom:12}}>⚔️</div>
         <div className="cinzel" style={{color:"var(--gold2)",fontSize:18,marginBottom:8}}>
@@ -1618,7 +1701,7 @@ function GameScreen({ initialState, onNewGame }) {
 
   if (phase === "epilogue" && epilogue) return (
     <div className="screen">
-      <TopBar state={state} />
+      <TopBar state={state} onLevelChange={async (l) => { const r = await api("/api/set-level","POST",{cefr:l}); setState(r.state); }} />
       <div className="epilogue-screen">
         <div className="rune-divider">ᚠ ᚢ ᚦ ᚨ ᚱ</div>
         <div className="cinzel" style={{color:"var(--gold2)",fontSize:18,marginBottom:4}}>
@@ -1653,8 +1736,8 @@ function GameScreen({ initialState, onNewGame }) {
 
   if (phase === "flashcard") return (
     <div className="screen">
-      <TopBar state={state} />
-      <StatsPanel state={state} />
+      <TopBar state={state} onLevelChange={async (l) => { const r = await api("/api/set-level","POST",{cefr:l}); setState(r.state); }} />
+      <ThreePanels state={state} />
       <FlashcardRound
         state={state}
         chapterInfo={chapter}
@@ -1747,8 +1830,8 @@ function GameScreen({ initialState, onNewGame }) {
 
   if (phase === "narration") return (
     <div className="screen">
-      <TopBar state={state} />
-      <StatsPanel state={state} />
+      <TopBar state={state} onLevelChange={async (l) => { const r = await api("/api/set-level","POST",{cefr:l}); setState(r.state); }} />
+      <ThreePanels state={state} />
 
       {chapter && (
         <div className="chapter-header">
@@ -1784,8 +1867,8 @@ function GameScreen({ initialState, onNewGame }) {
   // Challenge phase
   return (
     <div className="screen">
-      <TopBar state={state} />
-      <StatsPanel state={state} />
+      <TopBar state={state} onLevelChange={async (l) => { const r = await api("/api/set-level","POST",{cefr:l}); setState(r.state); }} />
+      <ThreePanels state={state} />
 
       {result && (
         <div className="panel" style={{paddingBottom:8}}>
@@ -1978,9 +2061,7 @@ function GameScreen({ initialState, onNewGame }) {
             🪨 RUNEN
           </button>
         )}
-        <button className="cmd-btn cinzel" onClick={() => handleCommand("/level")}>
-          ⚡ NIVEAU
-        </button>
+
       </div>
 
       {/* Modals */}
