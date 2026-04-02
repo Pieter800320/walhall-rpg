@@ -1205,7 +1205,18 @@ function GameScreen({ initialState }) {
       setChallenges(injected);
       const startIdx = (r.challenge_index && r.challenge_index < injected.length) ? r.challenge_index : 0;
       setChalIdx(startIdx);
-      if (startIdx > 0) setPhase("challenge");
+      // If challenge_index equals length, all challenges done — go straight to narration
+      // so player can click through to complete the chapter
+      if (startIdx > 0 && startIdx < injected.length) {
+        setPhase("challenge");
+      } else if (r.challenge_index >= injected.length && injected.length > 0) {
+        // All challenges completed — skip narration, show completion prompt
+        setChalIdx(injected.length - 1);
+        setPhase("challenge");
+        setResult({ correct: true, explanation: "Kapitel abgeschlossen! Drücke WEITER.", xp_gained: 0, levelled_up: false });
+      } else {
+        setPhase("narration");
+      }
       setResult(null);
       setAnswer("");
       setPhase("narration");
