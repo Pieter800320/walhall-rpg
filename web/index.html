@@ -891,11 +891,12 @@ const ITEM_DESCRIPTIONS = {
 };
 
 const TOOL_INFO = [
-  { name: "Stein",       icon: "💎", cost: "3 Mana",         desc: "Flüstert einen Grammatikhinweis auf Deutsch" },
-  { name: "Zungengabe",  icon: "🌀", cost: "6 Mana",         desc: "Übersetzt die Aufgabe ins Englische" },
-  { name: "Weissagung",  icon: "👁",  cost: "6 Mana + 1 Gold", desc: "Brunhilde erklärt die Grammatik auf Deutsch" },
-  { name: "Pforte",      icon: "🌌", cost: "9 Mana + 2 Gold", desc: "Enthüllt die Antwort und überspringt die Aufgabe" },
-  { name: "Tagebuch",    icon: "📖", cost: "Kostenlos",       desc: "Dein persönliches Tagebuch aller Ereignisse" },
+  { name: "Edelstein",      icon: "💎", cost: "3 Mana",          cmd: "/stein",    desc: "Flüstert einen Grammatikhinweis auf Deutsch" },
+  { name: "Schreibfeder",   icon: "🪶", cost: "6 Mana",          cmd: "/translate", desc: "Übersetzt die Aufgabe ins Englische" },
+  { name: "Odin's Auge",    icon: "👁", cost: "6 Mana + 1 Gold", cmd: "/erkläre",  desc: "Brunhilde erklärt die Grammatik auf Deutsch" },
+  { name: "Portalschlüssel",icon: "🌌", cost: "9 Mana + 2 Gold", cmd: "/portal",   desc: "Enthüllt die Antwort und überspringt die Aufgabe" },
+  { name: "Tagebuch",       icon: "📖", cost: "Kostenlos",        cmd: "/diary",    desc: "Grimnirs persönliches Tagebuch aller Ereignisse" },
+  { name: "Schriftrolle",   icon: "📜", cost: "Kostenlos",        cmd: "/scroll",   desc: "Deutsches Wörterbuch — schlage jedes Wort nach" },
 ];
 
 const ITEM_ICONS = {
@@ -987,7 +988,7 @@ function TopBar({ state, onLevelChange }) {
 }
 
 // ── Three Dropdown Panels ─────────────────────────────────────
-function ThreePanels({ state }) {
+function ThreePanels({ state, onUse }) {
   const [open, setOpen] = useState(null); // "stats"|"waffen"|"werkzeuge"
   if (!state) return null;
   const toggle = (panel) => setOpen(o => o === panel ? null : panel);
@@ -1075,17 +1076,27 @@ function ThreePanels({ state }) {
         </button>
         {open==="werkzeuge" && (
           <div style={{background:"var(--panel)",border:"1px solid var(--border)",
-            borderTop:"none",borderRadius:"0 0 2px 2px",padding:"10px 10px"}}>
+            borderTop:"none",borderRadius:"0 0 2px 2px",padding:"8px"}}>
             {TOOL_INFO.map(t => (
-              <div key={t.name} style={{marginBottom:8}}>
-                <div style={{display:"flex",justifyContent:"space-between",
-                  alignItems:"center",marginBottom:2}}>
-                  <span style={{color:"var(--gold2)",fontFamily:"Cinzel,serif",fontSize:11}}>
-                    {t.icon} {t.name}
-                  </span>
-                  <span style={{fontSize:10,color:"var(--amber)"}}>{t.cost}</span>
+              <div key={t.name} style={{
+                display:"flex",alignItems:"center",gap:6,
+                padding:"6px 4px",marginBottom:4,
+                background:"var(--stone)",border:"1px solid var(--border)",borderRadius:2}}>
+                <span style={{fontSize:16}}>{t.icon}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{color:"var(--gold2)",fontFamily:"Cinzel,serif",fontSize:10,
+                    letterSpacing:"0.05em"}}>{t.name}</div>
+                  <div style={{fontSize:9,color:"var(--amber)"}}>{t.cost}</div>
                 </div>
-                <div style={{fontSize:11,color:"var(--text-dim)"}}>{t.desc}</div>
+                {onUse && (
+                  <button onClick={() => { onUse(t.cmd); toggle(null); }}
+                    style={{background:"var(--stone2)",border:"1px solid var(--gold-dim)",
+                      borderRadius:2,color:"var(--gold)",fontFamily:"Cinzel,serif",
+                      fontSize:8,letterSpacing:"0.08em",padding:"3px 6px",cursor:"pointer",
+                      whiteSpace:"nowrap"}}>
+                    BENUTZEN
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -1528,11 +1539,11 @@ function GameScreen({ initialState, onNewGame }) {
       if (cmd === "/stein") {
         const r = await api("/api/command", "POST", {
           command: "/stein",
-          prompt_en: chal?.prompt_en || chal?.prompt_de || "",
+          prompt_en: chal?.prompt_de || chal?.prompt_en || "",
         });
         setState(r.state || state);
         setModal({
-          title: `💎 Offenbarungsstein (${r.hints_remaining} verbleibend)`,
+          title: "💎 Edelstein",
           content: r.result || r.message,
         });
       }
@@ -1555,7 +1566,7 @@ function GameScreen({ initialState, onNewGame }) {
         setState(r.state || state);
         if (r.success) {
           setModal({
-            title: "🌀 Zungengabe",
+            title: "🪶 Schreibfeder",
             content: chal?.prompt_en || "No English translation available.",
           });
         } else {
@@ -1570,7 +1581,7 @@ function GameScreen({ initialState, onNewGame }) {
         });
         setState(r.state || state);
         setModal({
-          title: "👁 Weissagung — Brunhildes Wissen",
+          title: "👁 Odin's Auge — Brunhildes Weissagung",
           content: r.result || r.message,
         });
       }
@@ -1591,7 +1602,7 @@ function GameScreen({ initialState, onNewGame }) {
         if (r.success) {
           setState(r.state);
           setModal({
-            title: "🌌 Zauberpforte — Antwort enthüllt",
+            title: "🌌 Portalschlüssel — Antwort enthüllt",
             content: `Die Antwort: ${correctAns}\n\n+${r.xp_gained} XP (halbe Belohnung)\n\nDiese Herausforderung wird übersprungen.`,
           });
           // Auto-advance after portal use
@@ -1737,7 +1748,7 @@ function GameScreen({ initialState, onNewGame }) {
   if (phase === "flashcard") return (
     <div className="screen">
       <TopBar state={state} onLevelChange={async (l) => { const r = await api("/api/set-level","POST",{cefr:l}); setState(r.state); }} />
-      <ThreePanels state={state} />
+      <ThreePanels state={state} onUse={handleCommand} />
       <FlashcardRound
         state={state}
         chapterInfo={chapter}
@@ -1831,7 +1842,7 @@ function GameScreen({ initialState, onNewGame }) {
   if (phase === "narration") return (
     <div className="screen">
       <TopBar state={state} onLevelChange={async (l) => { const r = await api("/api/set-level","POST",{cefr:l}); setState(r.state); }} />
-      <ThreePanels state={state} />
+      <ThreePanels state={state} onUse={handleCommand} />
 
       {chapter && (
         <div className="chapter-header">
@@ -1868,7 +1879,7 @@ function GameScreen({ initialState, onNewGame }) {
   return (
     <div className="screen">
       <TopBar state={state} onLevelChange={async (l) => { const r = await api("/api/set-level","POST",{cefr:l}); setState(r.state); }} />
-      <ThreePanels state={state} />
+      <ThreePanels state={state} onUse={handleCommand} />
 
       {result && (
         <div className="panel" style={{paddingBottom:8}}>
@@ -2031,29 +2042,15 @@ function GameScreen({ initialState, onNewGame }) {
       {/* Command Bar */}
       <div className="cmd-bar">
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/stein")}>
-          💎 STEIN ·3
+          💎 EDELSTEIN
         </button>
         <button className="cmd-btn cinzel" onClick={() => handleCommand("/portal")}
           >
-          🌌 PFORTE ·9+2🪙
-        </button>
-        <button className="cmd-btn cinzel" onClick={() => handleCommand("/translate")}>
-          🌀 ZUNGENGABE ·6
-        </button>
-        <button className="cmd-btn cinzel" onClick={() => handleCommand("/erkläre")}>
-          👁 WEISSAGUNG ·6+1🪙
-        </button>
-        <button className="cmd-btn cinzel" onClick={() => handleCommand("/diary")}>
-          📖 TAGEBUCH
+          🌌 PORTAL
         </button>
         {hasDice && (
           <button className="cmd-btn cinzel" onClick={() => handleCommand("/würfeln")}>
             🎲 WÜRFELN
-          </button>
-        )}
-        {hasScroll && (
-          <button className="cmd-btn cinzel" onClick={() => handleCommand("/scroll")}>
-            📜 SCHRIFTROLLE
           </button>
         )}
         {hasRunen && (

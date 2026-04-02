@@ -251,17 +251,17 @@ def narrate_chapter(player_name: str, chapter_data: dict, cefr: str = "B2") -> s
 
 
 def explain_grammar(player_name: str, grammar_focus: str, example_sentence: str) -> str:
-    """
-    Full grammar explanation as Brunhilde. Mana-gated — only called
-    after mana_engine confirms the player can afford /erkläre.
-    Returns explanation as a plain string.
-    """
-    prompt = explanation_prompt(player_name, grammar_focus, example_sentence)
+    """Full grammar explanation as Brunhilde, always in German."""
+    prompt = f"""Grammatikregel: {grammar_focus}
+Beispiel: {example_sentence}
+Spieler: {player_name}
 
+Erkläre die Regel in 3 kurzen Punkten auf Deutsch. Halte den Ton einer weisen Seherin."""
     try:
         response = client.messages.create(
             model=SONNET_MODEL,
-            max_tokens=500,
+            max_tokens=400,
+            system="Du bist Brunhilde, eine weise Waldseherin in einem deutschen Lernspiel. Antworte IMMER und AUSSCHLIESSLICH auf Deutsch. Niemals Englisch. Keine Markdown-Formatierung.",
             messages=[{"role": "user", "content": prompt}],
         )
         return response.content[0].text.strip()

@@ -74,17 +74,19 @@ def evaluate_answer(player_name: str, challenge: str, player_answer: str, cefr: 
 
 
 def get_hint(player_name: str, challenge: str, cefr: str = "B2") -> str:
-    """
-    Get a grammar hint from Haiku without revealing the answer.
-    """
-    srs = build_srs_context()
-    prompt = hint_prompt(player_name, challenge, srs, cefr)
+    """Get a grammar hint in German without revealing the answer."""
+    prompt = f"""Aufgabe: {challenge}
+
+Spieler: {player_name}, Niveau: {cefr}
+
+Gib einen kurzen Grammatik-Hinweis (max 2 Sätze). Verrate die Antwort NICHT."""
     try:
         response = client.messages.create(
             model=HAIKU_MODEL,
             max_tokens=150,
+            system="Du bist der Offenbarungsstein in einem deutschen Lernspiel. Antworte IMMER und AUSSCHLIESSLICH auf Deutsch. Niemals Englisch.",
             messages=[{"role": "user", "content": prompt}],
         )
         return response.content[0].text.strip()
     except Exception as e:
-        return f"Brunhilde schweigt. (API error: {str(e)})"
+        return f"Der Stein schweigt. ({str(e)})"
