@@ -1010,23 +1010,42 @@ function ThreePanels({ state, onUse }) {
         </button>
         {open==="stats" && (
           <div style={{background:"var(--panel)",border:"1px solid var(--border)",
-            borderTop:"none",borderRadius:"0 0 2px 2px",padding:"10px 10px"}}>
-            <div style={{display:"flex",justifyContent:"space-between",
-              fontSize:12,marginBottom:8,color:"var(--text-dim)"}}>
-              <span>Genauigkeit</span>
-              <span style={{color:"var(--green2)"}}>{state.accuracy_pct}%</span>
+            borderTop:"none",borderRadius:"0 0 2px 2px",padding:"8px"}}>
+            {/* Genauigkeit */}
+            <div style={{
+              display:"flex",alignItems:"center",gap:6,
+              padding:"6px 4px",marginBottom:4,
+              background:"var(--stone)",border:"1px solid var(--border)",borderRadius:2}}>
+              <span style={{fontSize:16}}>🎯</span>
+              <div style={{flex:1}}>
+                <div style={{color:"var(--gold2)",fontFamily:"Cinzel,serif",fontSize:10,
+                  letterSpacing:"0.05em"}}>Genauigkeit</div>
+                <div style={{fontSize:9,color:"var(--amber)"}}>{state.accuracy_pct}%</div>
+              </div>
             </div>
             {[
-              ["Wortschatz", state.skills?.vocabulary||0, "bar-blue"],
-              ["Grammatik",  state.skills?.grammar||0,    "bar-purple"],
-              ["Schreiben",  state.skills?.writing||0,    "bar-green"],
-            ].map(([label, val, cls]) => (
-              <div key={label} className="skill-row">
-                <span className="skill-label" style={{fontSize:11}}>{label}</span>
-                <div className="skill-bar bar-track">
-                  <div className={`bar-fill ${cls}`} style={{width:`${Math.min(100,val)}%`}}/>
+              ["📘 Wortschatz", state.skills?.vocabulary||0, "var(--blue2)"],
+              ["📗 Grammatik",  state.skills?.grammar||0,    "var(--purple2)"],
+              ["📝 Schreiben",  state.skills?.writing||0,    "var(--green2)"],
+            ].map(([label, val, color]) => (
+              <div key={label} style={{
+                display:"flex",alignItems:"center",gap:6,
+                padding:"6px 4px",marginBottom:4,
+                background:"var(--stone)",border:"1px solid var(--border)",borderRadius:2}}>
+                <span style={{fontSize:14}}>{label.split(" ")[0]}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{color:"var(--gold2)",fontFamily:"Cinzel,serif",fontSize:10,
+                    letterSpacing:"0.05em"}}>{label.split(" ")[1]}</div>
+                  <div style={{
+                    height:4,background:"rgba(0,0,0,0.4)",borderRadius:1,marginTop:3,
+                    border:"1px solid var(--border)"}}>
+                    <div style={{height:"100%",borderRadius:1,
+                      background:color,width:`${Math.min(100,val)}%`,
+                      transition:"width 0.4s"}}/>
+                  </div>
                 </div>
-                <span style={{fontSize:10,color:"var(--text-dim)",minWidth:24}}>{val}</span>
+                <span style={{fontSize:9,color:"var(--text-dim)",minWidth:20,
+                  fontFamily:"Cinzel,serif"}}>{val}</span>
               </div>
             ))}
           </div>
@@ -1044,20 +1063,25 @@ function ThreePanels({ state, onUse }) {
         </button>
         {open==="waffen" && (
           <div style={{background:"var(--panel)",border:"1px solid var(--border)",
-            borderTop:"none",borderRadius:"0 0 2px 2px",padding:"10px 10px"}}>
+            borderTop:"none",borderRadius:"0 0 2px 2px",padding:"8px"}}>
             {ownedWeapons.length === 0 && (
-              <div style={{color:"var(--text-dim)",fontSize:12,fontStyle:"italic"}}>
+              <div style={{
+                padding:"8px 6px",color:"var(--text-dim)",fontSize:10,
+                fontFamily:"Cinzel,serif",letterSpacing:"0.05em",
+                fontStyle:"italic",textAlign:"center"}}>
                 Noch keine Waffen erworben.
               </div>
             )}
             {ownedWeapons.map(item => (
-              <div key={item} style={{marginBottom:8}}>
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                  <span style={{fontSize:16}}>{ITEM_ICONS[item]||"⚔"}</span>
-                  <span style={{color:"var(--gold2)",fontFamily:"Cinzel,serif",fontSize:11}}>{item}</span>
-                </div>
-                <div style={{fontSize:11,color:"var(--text-dim)",paddingLeft:22}}>
-                  {ITEM_DESCRIPTIONS[item]||""}
+              <div key={item} style={{
+                display:"flex",alignItems:"center",gap:6,
+                padding:"6px 4px",marginBottom:4,
+                background:"var(--stone)",border:"1px solid var(--border)",borderRadius:2}}>
+                <span style={{fontSize:16}}>{ITEM_ICONS[item]||"⚔"}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{color:"var(--gold2)",fontFamily:"Cinzel,serif",fontSize:10,
+                    letterSpacing:"0.05em"}}>{item}</div>
+                  <div style={{fontSize:9,color:"var(--amber)"}}>{ITEM_DESCRIPTIONS[item]||""}</div>
                 </div>
               </div>
             ))}
@@ -1088,18 +1112,19 @@ function ThreePanels({ state, onUse }) {
                     letterSpacing:"0.05em"}}>{t.name}</div>
                   <div style={{fontSize:9,color:"var(--amber)"}}>{t.cost}</div>
                 </div>
-                {onUse && (
-                  <button onClick={() => {
+                <button onClick={() => {
+                      if (!onUse) return;
                       if (t.cmd === "/stein") { toggle(null); onUse("__stein_modal__"); }
                       else { onUse(t.cmd); toggle(null); }
                     }}
                     style={{background:"var(--stone2)",border:"1px solid var(--gold-dim)",
-                      borderRadius:2,color:"var(--gold)",fontFamily:"Cinzel,serif",
-                      fontSize:8,letterSpacing:"0.08em",padding:"3px 6px",cursor:"pointer",
+                      borderRadius:2,color: onUse ? "var(--gold)" : "var(--text-dim)",
+                      fontFamily:"Cinzel,serif",
+                      fontSize:8,letterSpacing:"0.08em",padding:"3px 6px",
+                      cursor: onUse ? "pointer" : "default",
                       whiteSpace:"nowrap"}}>
                     BENUTZEN
                   </button>
-                )}
               </div>
             ))}
           </div>
