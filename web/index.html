@@ -1561,12 +1561,28 @@ function GameScreen({ initialState, onNewGame }) {
   // ── Commands ────────────────────────────────────────────────
   async function handleCommand(cmd) {
     const chal = challenges[chalIdx];
+
+    // Non-async commands — handle before setLoading
+    if (cmd === "__stein_modal__") {
+      setModal({ title: "💎 Edelstein — Tipp prüfen", isStein: true });
+      return;
+    }
+    if (cmd === "/diary") {
+      const r = await api("/api/diary");
+      setModal({ title: `📖 ${state.player_name}s Tagebuch`, content: r.entries || r.message });
+      return;
+    }
+    if (cmd === "/runen") {
+      setPhase("flashcard");
+      return;
+    }
+    if (cmd === "/level") {
+      setModal({ title: "Sprachniveau", content: "", isLevel: true });
+      return;
+    }
+
     setLoading(true);
     try {
-      if (cmd === "__stein_modal__") {
-        setModal({ title: "💎 Edelstein — Tipp prüfen", isStein: true });
-        return;
-      }
       if (cmd === "/stein") {
         const r = await api("/api/command", "POST", {
           command: "/stein",
@@ -1587,10 +1603,6 @@ function GameScreen({ initialState, onNewGame }) {
             ? "✦ Glück! Deine nächste korrekte Antwort bringt doppelte XP!"
             : "✖ Pech! Die Würfel wenden sich gegen dich. -15 Mana.",
         });
-      }
-      else if (cmd === "/diary") {
-        const r = await api("/api/diary");
-        setModal({ title: `📖 ${state.player_name}s Tagebuch`, content: r.entries });
       }
       if (cmd === "/translate") {
         const r = await api("/api/command", "POST", { command: "/translate" });
@@ -1647,12 +1659,6 @@ function GameScreen({ initialState, onNewGame }) {
           content: "",
           isScroll: true,
         });
-      }
-      else if (cmd === "/runen") {
-        setPhase("flashcard");
-      }
-      else if (cmd === "/level") {
-        setModal({ title: "Sprachniveau", content: "", isLevel: true });
       }
     } catch(e) {
       setModal({ title: "Fehler", content: "Verbindungsfehler." });
@@ -2057,10 +2063,24 @@ function GameScreen({ initialState, onNewGame }) {
               />
             )}
 
-            <button className="submit-btn" onClick={submitAnswer}
-              disabled={loading || !answer.trim()}>
-              {loading ? "BRUNHILDE BEWERTET..." : "ANTWORTEN ⚔"}
-            </button>
+            <div style={{display:"flex",gap:6}}>
+              <button className="submit-btn" onClick={submitAnswer}
+                disabled={loading || !answer.trim()}
+                style={{flex:1}}>
+                {loading ? "BRUNHILDE BEWERTET..." : "ANTWORTEN ⚔"}
+              </button>
+              <button
+                onClick={() => navigator.clipboard?.writeText(answer)}
+                disabled={!answer.trim()}
+                title="Antwort kopieren"
+                style={{
+                  background:"var(--stone2)",border:"1px solid var(--border)",
+                  borderRadius:2,color:"var(--text-dim)",fontSize:16,
+                  padding:"0 12px",cursor:"pointer",flexShrink:0,
+                }}>
+                📋
+              </button>
+            </div>
           </div>
         </div>
       )}
