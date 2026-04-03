@@ -2236,7 +2236,22 @@ function SteinModal({ challenges, chalIdx, steinDraft, setSteinDraft,
           placeholder="Schreibe deine Antwort hier..."
           value={steinDraft}
           onChange={e => setSteinDraft(e.target.value)}
-          rows={3} style={{marginBottom:8}} autoFocus />
+          rows={3} style={{marginBottom:6}} autoFocus />
+        <button
+          onClick={async () => {
+            try {
+              const text = await navigator.clipboard.readText();
+              setSteinDraft(text);
+            } catch(e) {}
+          }}
+          style={{
+            background:"var(--stone2)",border:"1px solid var(--border)",
+            borderRadius:2,color:"var(--text-dim)",fontFamily:"Cinzel,serif",
+            fontSize:8,letterSpacing:"0.08em",padding:"4px 10px",
+            cursor:"pointer",marginBottom:8,width:"100%",
+          }}>
+          📋 EINFÜGEN
+        </button>
         <button className="submit-btn" onClick={onCheck}
           disabled={steinLoading || !steinDraft.trim()} style={{marginBottom:8}}>
           {steinLoading ? "STEIN DENKT..." : "TIPP PRÜFEN · 3 Mana"}
