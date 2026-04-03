@@ -895,7 +895,7 @@ const TOOL_INFO = [
   { name: "Schreibfeder",   icon: "🪶", cost: "6 Mana",          cmd: "/translate", desc: "Übersetzt die Aufgabe ins Englische" },
   { name: "Odin's Auge",    icon: "👁", cost: "6 Mana + 1 Gold", cmd: "/erkläre",  desc: "Brunhilde erklärt die Grammatik auf Deutsch" },
   { name: "Portalschlüssel",icon: "🌌", cost: "9 Mana + 2 Gold", cmd: "/portal",   desc: "Enthüllt die Antwort und überspringt die Aufgabe" },
-  { name: "Tagebuch",       icon: "📖", cost: "Kostenlos",        cmd: "/diary",    desc: "Grimnirs persönliches Tagebuch aller Ereignisse" },
+  { name: "Tagebuch",       icon: "📖", cost: "Kostenlos",        cmd: "/diary",    desc: "Dein persönliches Tagebuch aller Ereignisse" },
   { name: "Schriftrolle",   icon: "📜", cost: "Kostenlos",        cmd: "/scroll",   desc: "Deutsches Wörterbuch — schlage jedes Wort nach" },
 ];
 
@@ -1089,7 +1089,10 @@ function ThreePanels({ state, onUse }) {
                   <div style={{fontSize:9,color:"var(--amber)"}}>{t.cost}</div>
                 </div>
                 {onUse && (
-                  <button onClick={() => { onUse(t.cmd); toggle(null); }}
+                  <button onClick={() => {
+                      if (t.cmd === "/stein") { toggle(null); onUse("__stein_modal__"); }
+                      else { onUse(t.cmd); toggle(null); }
+                    }}
                     style={{background:"var(--stone2)",border:"1px solid var(--gold-dim)",
                       borderRadius:2,color:"var(--gold)",fontFamily:"Cinzel,serif",
                       fontSize:8,letterSpacing:"0.08em",padding:"3px 6px",cursor:"pointer",
@@ -1333,6 +1336,10 @@ function GameScreen({ initialState, onNewGame }) {
   const [scrollWord, setScrollWord] = useState("");
   const [epilogue, setEpilogue] = useState(null);
   const [chapterEarnings, setChapterEarnings] = useState({xp:0,mana:0,gold:0});
+  const [titlePromotion, setTitlePromotion] = useState(null);
+  const [steinDraft, setSteinDraft] = useState("");
+  const [steinHint, setSteinHint] = useState("");
+  const [steinLoading, setSteinLoading] = useState(false);
   const [actTransition, setActTransition] = useState(null);
   const inputRef = useRef(null);
   const autoAdvanceTimer = useRef(null);
@@ -1384,7 +1391,24 @@ function GameScreen({ initialState, onNewGame }) {
 
   async function submitAnswer() {
     if (!answer.trim() || loading) return;
+    async function handleSteinCheck() {
+    if (!steinDraft.trim() || steinLoading) return;
+    setSteinLoading(true);
     const chal = challenges[chalIdx];
+    try {
+      const r = await api("/api/command", "POST", {
+        command: "/stein",
+        prompt_en: `${chal?.prompt_de || chal?.prompt_en || ""} [Spielerantwort zur Prüfung: ${steinDraft}]`,
+      });
+      setState(r.state || state);
+      setSteinHint(r.result || r.message || "");
+    } catch(e) {
+      setSteinHint("Verbindungsfehler.");
+    }
+    setSteinLoading(false);
+  }
+
+  const chal = challenges[chalIdx];
     setLoading(true);
 
     // Word count check for langtext
@@ -1417,8 +1441,15 @@ function GameScreen({ initialState, onNewGame }) {
         item_reward:            chal.item_reward || "",
       });
 
+      const oldTitle = getTitle(state.xp || 0);
+      const newTitle = getTitle((r.state?.xp) || 0);
       setState(r.state);
       setResult(r);
+
+      // Check for title promotion
+      if (r.correct && oldTitle !== newTitle) {
+        setTimeout(() => setTitlePromotion(newTitle), 800);
+      }
 
       // Accumulate chapter earnings
       if (r.correct) {
@@ -1519,10 +1550,6 @@ function GameScreen({ initialState, onNewGame }) {
           setPhase("act-transition");
         } else {
           setPhase("chapter-complete");
-          // Show chapter complete for 2s then load next
-          setTimeout(() => {
-            loadChapter(r.state.episode, r.state.act, r.state.chapter);
-          }, 2500);
         }
       }
     } catch(e) {
@@ -1536,6 +1563,10 @@ function GameScreen({ initialState, onNewGame }) {
     const chal = challenges[chalIdx];
     setLoading(true);
     try {
+      if (cmd === "__stein_modal__") {
+        setModal({ title: "💎 Edelstein — Tipp prüfen", isStein: true });
+        return;
+      }
       if (cmd === "/stein") {
         const r = await api("/api/command", "POST", {
           command: "/stein",
@@ -1605,14 +1636,7 @@ function GameScreen({ initialState, onNewGame }) {
             title: "🌌 Portalschlüssel — Antwort enthüllt",
             content: `Die Antwort: ${correctAns}\n\n+${r.xp_gained} XP (halbe Belohnung)\n\nDiese Herausforderung wird übersprungen.`,
           });
-          // Auto-advance after portal use
-          setTimeout(() => {
-            setModal(null);
-            const next = chalIdx + 1;
-            if (next < challenges.length) {
-              setChalIdx(next); setResult(null); setAnswer("");
-            } else { completeChapter(); }
-          }, 2500);
+          // Portal result stays until player closes modal
         } else {
           setModal({ title: "🌌 Zauberpforte", content: r.message });
         }
@@ -1737,10 +1761,13 @@ function GameScreen({ initialState, onNewGame }) {
         </div>
         <div className="cinzel" style={{
           color:"var(--gold2)",fontSize:11,letterSpacing:"0.15em",
-          marginTop:20,fontStyle:"italic"
-        }}>
-          ✦ EPISODE I COMPLETE ✦
+          marginTop:20}}>
+          ✦ EPISODE I ABGESCHLOSSEN ✦
         </div>
+        <button className="modal-close cinzel" style={{marginTop:16}}
+          onClick={() => onNewGame && onNewGame()}>
+          🏠 ZURÜCK ZUM ANFANG
+        </button>
       </div>
     </div>
   );
@@ -1794,9 +1821,11 @@ function GameScreen({ initialState, onNewGame }) {
           </div>
         )}
       </div>
-      <div className="loading-text cinzel" style={{marginTop:16}}>
-        NÄCHSTES KAPITEL LÄDT...
-      </div>
+      <button className="start-btn cinzel"
+        style={{maxWidth:260,marginTop:20}}
+        onClick={() => loadChapter(state.episode, state.act, state.chapter)}>
+        WEITER →
+      </button>
     </div>
   );
 
@@ -2039,30 +2068,71 @@ function GameScreen({ initialState, onNewGame }) {
       <InventoryPanel state={state} onItemClick={item =>
         setModal({ title: `${ITEM_ICONS[item]||"📦"} ${item}`, content: "" })} />
 
-      {/* Command Bar */}
-      <div className="cmd-bar">
-        <button className="cmd-btn cinzel" onClick={() => handleCommand("/stein")}>
-          💎 EDELSTEIN
-        </button>
-        <button className="cmd-btn cinzel" onClick={() => handleCommand("/portal")}
-          >
-          🌌 PORTAL
-        </button>
-        {hasDice && (
-          <button className="cmd-btn cinzel" onClick={() => handleCommand("/würfeln")}>
-            🎲 WÜRFELN
-          </button>
-        )}
-        {hasRunen && (
-          <button className="cmd-btn cinzel" onClick={() => handleCommand("/runen")}>
-            🪨 RUNEN
-          </button>
-        )}
+      {/* Title promotion celebration */}
+      {titlePromotion && (
+        <div className="modal-overlay" onClick={() => setTitlePromotion(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}
+            style={{textAlign:"center",background:"linear-gradient(180deg,#2a1e08,var(--panel))"}}>
+            <div style={{fontSize:40,marginBottom:8}}>✦</div>
+            <div className="cinzel" style={{color:"var(--gold2)",fontSize:11,
+              letterSpacing:"0.2em",marginBottom:4}}>NEUER TITEL</div>
+            <div className="cinzel" style={{color:"var(--gold2)",fontSize:20,
+              textShadow:"0 0 20px rgba(232,184,106,0.6)",marginBottom:12}}>
+              {titlePromotion}
+            </div>
+            <div style={{color:"var(--text-dim)",fontSize:13,fontStyle:"italic",marginBottom:16}}>
+              Dein Name wird in den Runen verewigt, {state.player_name}.
+            </div>
+            <button className="modal-close cinzel" onClick={() => setTitlePromotion(null)}>
+              EHRE ANNEHMEN
+            </button>
+          </div>
+        </div>
+      )}
 
-      </div>
+      {/* Edelstein draft check modal */}
+      {modal?.isStein && (
+        <div className="modal-overlay" onClick={() => { setModal(null); setSteinDraft(""); setSteinHint(""); }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-title">💎 Edelstein — Tipp prüfen</div>
+            <div style={{fontSize:13,color:"var(--text-dim)",fontStyle:"italic",marginBottom:10}}>
+              Schreibe deine Antwort. Der Stein prüft sie und gibt einen Hinweis.
+            </div>
+            <div style={{
+              background:"rgba(0,0,0,0.3)",border:"1px solid var(--gold-dim)",
+              borderRadius:2,padding:10,marginBottom:8,fontSize:13,color:"var(--text)"}}>
+              {challenges[chalIdx]?.prompt_de || challenges[chalIdx]?.prompt_en || ""}
+            </div>
+            <textarea
+              className="answer-input"
+              placeholder="Schreibe deine Antwort hier..."
+              value={steinDraft}
+              onChange={e => { setSteinDraft(e.target.value); setSteinHint(""); }}
+              rows={3}
+              style={{marginBottom:8}}
+            />
+            <button className="submit-btn" onClick={handleSteinCheck}
+              disabled={steinLoading || !steinDraft.trim()}
+              style={{marginBottom:8}}>
+              {steinLoading ? "STEIN DENKT..." : "TIPP PRÜFEN · 3 Mana"}
+            </button>
+            {steinHint && (
+              <div style={{background:"rgba(201,148,58,0.08)",border:"1px solid var(--gold-dim)",
+                borderRadius:2,padding:10,fontSize:14,color:"var(--text)",fontStyle:"italic",
+                marginBottom:8}}>
+                {steinHint}
+              </div>
+            )}
+            <button className="modal-close cinzel"
+              onClick={() => { setModal(null); setSteinDraft(""); setSteinHint(""); }}>
+              SCHLIESSEN
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
-      {modal && !modal.isScroll && !modal.isLevel && (
+      {modal && !modal.isScroll && !modal.isLevel && !modal.isStein && (
         <Modal
           title={modal.title}
           content={modal.content}

@@ -199,6 +199,7 @@ def narrate_epilogue(player_name: str, ending: str, stats: dict) -> str:
             response = client.messages.create(
                 model=model,
                 max_tokens=600,
+                system="Du bist der Erzähler eines deutschen Fantasy-Rollenspiels. Antworte AUSSCHLIESSLICH auf Deutsch. Niemals Englisch. Keine Markdown-Formatierung.",
                 messages=[{"role": "user", "content": prompt}],
             )
             import re

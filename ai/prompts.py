@@ -22,19 +22,23 @@ def evaluator_prompt(player_name: str, challenge: str, player_answer: str,
     Returns JSON: { correct: bool, explanation: str, grammar_focus: str }
     """
     level_note = f"The player's level is {cefr} ({CEFR_DESCRIPTIONS.get(cefr, '')})."
-    return f"""You are a strict but encouraging German language evaluator in a fantasy RPG.
+    return f"""You are a strict German language evaluator in a fantasy RPG.
 The player's name is {player_name}. {level_note}
-{srs_context}
 
 Challenge: {challenge}
 Player's answer: {player_answer}
 
-Evaluate whether the answer is grammatically correct and contextually appropriate.
-Respond ONLY in valid JSON with no extra text:
+CRITICAL RULES:
+- NEVER reveal the correct answer in your explanation
+- NEVER write what the correct sentence should be
+- NEVER say "it should be X" or "the correct form is X"
+- Only name the grammar rule that was broken
+
+Respond ONLY in valid JSON:
 {{
   "correct": true or false,
-  "explanation": "ONE short sentence in German. If correct: praise the grammar used. If wrong: name the rule that was broken WITHOUT giving the correct answer. Max 15 words. Example correct: 'Sehr gut! Der Dativ nach helfen ist korrekt.' Example wrong: 'Falsch — nach helfen braucht man den Dativ, nicht den Akkusativ.'",
-  "grammar_focus": "the grammar rule tested, e.g. Dativ case"
+  "explanation": "ONE sentence in German, max 12 words. If correct: praise briefly. If wrong: name only the broken rule, no correct answer. Examples — correct: 'Sehr gut! Perfekt mit sein ist korrekt.' wrong: 'Falsch — nach helfen steht der Dativ, nicht der Akkusativ.'",
+  "grammar_focus": "grammar rule tested, e.g. Dativ case"
 }}"""
 
 
@@ -240,32 +244,32 @@ Respond ONLY in valid JSON:
 
 def epilogue_prompt(player_name: str, ending: str, stats: dict) -> str:
     """
-    Sonnet prompt: generate a personalised episode epilogue.
+    Sonnet prompt: generate a personalised episode epilogue in German.
     ending: "rache" or "vergebung"
-    stats: dict with level, accuracy_pct, streak, inventory
     """
     ending_description = (
-        "The player chose RACHE — they destroyed the Waldwächter. The curse is broken "
-        "but the forest has lost its guardian. The world is darker for it."
+        "Der Spieler wählte RACHE — er hat den Waldwächter vernichtet. Der Fluch ist gebrochen, "
+        "aber der Wald hat seinen Hüter verloren. Die Welt ist dunkler geworden."
         if ending == "rache" else
-        "The player chose VERGEBUNG — they freed the Waldwächter. The spirit is reborn, "
-        "the forest heals, and Brunhilde now walks beside them as a permanent ally."
+        "Der Spieler wählte VERGEBUNG — er befreite den Waldwächter. Der Geist wurde wiedergeboren, "
+        "der Wald heilt sich, und Brunhilde steht nun als ewige Verbündete an seiner Seite."
     )
-    return f"""You are the narrator of a dark Germanic mythology RPG. Write a personalised epilogue for the player.
+    return f"""Du bist der Erzähler eines dunklen germanischen Mythologie-Rollenspiels.
+WICHTIG: Schreibe AUSSCHLIESSLICH auf Deutsch. Kein einziges englisches Wort.
 
-Player name: {player_name}
-Ending chosen: {ending_description}
-Final level: {stats.get('level', 1)}
-Accuracy: {stats.get('accuracy_pct', 0)}%
-Items collected: {', '.join(stats.get('inventory', [])) or 'none'}
-Streak: {stats.get('streak', 0)} days
+Spielername: {player_name}
+Gewähltes Ende: {ending_description}
+Endlevel: {stats.get('level', 1)}
+Genauigkeit: {stats.get('accuracy_pct', 0)}%
+Gesammelte Gegenstände: {', '.join(stats.get('inventory', [])) or 'keine'}
+Streak: {stats.get('streak', 0)} Tage
 
-Write 3 paragraphs of immersive epilogue narration:
-1. The immediate aftermath of the choice — what happens in the grove
-2. The village of Nebelhain healing — how the people react to {player_name}
-3. A closing paragraph that ends with the line: "Die Gilde ruft dich. Eine neue Zeitlinie beginnt."
+Schreibe 3 atmosphärische Absätze auf Deutsch:
+1. Die unmittelbaren Folgen der Wahl — was geschieht im Hain
+2. Das Dorf Nebelhain heilt sich — wie die Menschen auf {player_name} reagieren
+3. Ein Schlussabsatz, der mit dem Satz endet: "Die Chronos-Gilde ruft dich. Eine neue Zeitlinie beginnt."
 
-Address the protagonist as {player_name}. Dark, mythological tone. No markdown formatting whatsoever — plain text only."""
+Sprich den Protagonisten als {player_name} an. Dunkler, mythologischer Ton. Keine Markdown-Formatierung."""
 
 
 def explanation_prompt(player_name: str, grammar_focus: str, example_sentence: str) -> str:
