@@ -1114,7 +1114,7 @@ function ThreePanels({ state, onUse }) {
                 </div>
                 <button onClick={() => {
                       if (!onUse) return;
-                      if (t.cmd === "/stein") { toggle(null); onUse("__stein_modal__"); }
+                      if (t.cmd === "/stein") { onUse("__stein_modal__"); }
                       else { onUse(t.cmd); toggle(null); }
                     }}
                     style={{background:"var(--stone2)",border:"1px solid var(--gold-dim)",
@@ -1415,16 +1415,14 @@ function GameScreen({ initialState, onNewGame }) {
     }
   }
 
-  async function submitAnswer() {
-    if (!answer.trim() || loading) return;
-    async function handleSteinCheck() {
+  async function handleSteinCheck() {
     if (!steinDraft.trim() || steinLoading) return;
     setSteinLoading(true);
-    const chal = challenges[chalIdx];
+    const chalForStein = challenges[chalIdx];
     try {
       const r = await api("/api/command", "POST", {
         command: "/stein",
-        prompt_en: `${chal?.prompt_de || chal?.prompt_en || ""} [Spielerantwort zur Prüfung: ${steinDraft}]`,
+        prompt_en: `${chalForStein?.prompt_de || chalForStein?.prompt_en || ""} [Spielerantwort zur Prüfung: ${steinDraft}]`,
       });
       setState(r.state || state);
       setSteinHint(r.result || r.message || "");
@@ -1434,7 +1432,9 @@ function GameScreen({ initialState, onNewGame }) {
     setSteinLoading(false);
   }
 
-  const chal = challenges[chalIdx];
+  async function submitAnswer() {
+    if (!answer.trim() || loading) return;
+    const chal = challenges[chalIdx];
     setLoading(true);
 
     // Word count check for langtext
@@ -1592,7 +1592,9 @@ function GameScreen({ initialState, onNewGame }) {
     if (cmd === "__stein_modal__") {
       setSteinDraft("");
       setSteinHint("");
-      setShowSteinModal(true);
+      // Force modal to show by setting it and ensuring re-render happens
+      // Use a small timeout to let dropdown state settle first
+      setTimeout(() => setShowSteinModal(true), 50);
       return;
     }
     if (cmd === "/diary") {
@@ -1765,6 +1767,11 @@ function GameScreen({ initialState, onNewGame }) {
           🗑 SPIELSTAND LÖSCHEN
         </button>
       </div>
+      {showSteinModal && <SteinModal challenges={challenges} chalIdx={chalIdx}
+        steinDraft={steinDraft} setSteinDraft={setSteinDraft}
+        steinHint={steinHint} steinLoading={steinLoading}
+        onCheck={handleSteinCheck}
+        onClose={() => { setShowSteinModal(false); setSteinDraft(""); setSteinHint(""); }} />}
     </div>
   );
 
@@ -2409,6 +2416,19 @@ function App() {
     setGameState(null);
     setShowNew(true);
   }} />;
+}
+
+// ── Global Stein Modal Portal ─────────────────────────────────
+// Rendered at root level so it works from any game phase
+function GlobalSteinModal({ show, challenges, chalIdx, steinDraft, setSteinDraft,
+                             steinHint, steinLoading, onCheck, onClose }) {
+  if (!show) return null;
+  return <SteinModal
+    challenges={challenges} chalIdx={chalIdx}
+    steinDraft={steinDraft} setSteinDraft={setSteinDraft}
+    steinHint={steinHint} steinLoading={steinLoading}
+    onCheck={onCheck} onClose={onClose}
+  />;
 }
 
 ReactDOM.render(<App />, document.getElementById("root"));
