@@ -1365,6 +1365,7 @@ function GameScreen({ initialState, onNewGame }) {
   const [steinDraft, setSteinDraft] = useState("");
   const [steinHint, setSteinHint] = useState("");
   const [steinLoading, setSteinLoading] = useState(false);
+  const [showSteinModal, setShowSteinModal] = useState(false);
   const [actTransition, setActTransition] = useState(null);
   const inputRef = useRef(null);
   const autoAdvanceTimer = useRef(null);
@@ -1589,7 +1590,9 @@ function GameScreen({ initialState, onNewGame }) {
 
     // Non-async commands — handle before setLoading
     if (cmd === "__stein_modal__") {
-      setModal({ title: "💎 Edelstein — Tipp prüfen", isStein: true });
+      setSteinDraft("");
+      setSteinHint("");
+      setShowSteinModal(true);
       return;
     }
     if (cmd === "/diary") {
@@ -1919,6 +1922,15 @@ function GameScreen({ initialState, onNewGame }) {
       <InventoryPanel state={state} onItemClick={item =>
         setModal({ title: `${ITEM_ICONS[item]||"📦"} ${item}`, content: "" })} />
 
+      {showSteinModal && <SteinModal
+        challenges={challenges} chalIdx={chalIdx}
+        steinDraft={steinDraft} setSteinDraft={setSteinDraft}
+        steinHint={steinHint} setSteinHint={setSteinHint}
+        steinLoading={steinLoading}
+        onCheck={handleSteinCheck}
+        onClose={() => { setShowSteinModal(false); setSteinDraft(""); setSteinHint(""); }}
+      />}
+
       <div className="cmd-bar" style={{gap:8}}>
         <button className="submit-btn cinzel"
           style={{flex:2}}
@@ -2094,17 +2106,7 @@ function GameScreen({ initialState, onNewGame }) {
                 style={{flex:1}}>
                 {loading ? "BRUNHILDE BEWERTET..." : "ANTWORTEN ⚔"}
               </button>
-              <button
-                onClick={() => navigator.clipboard?.writeText(answer)}
-                disabled={!answer.trim()}
-                title="Antwort kopieren"
-                style={{
-                  background:"var(--stone2)",border:"1px solid var(--border)",
-                  borderRadius:2,color:"var(--text-dim)",fontSize:16,
-                  padding:"0 12px",cursor:"pointer",flexShrink:0,
-                }}>
-                📋
-              </button>
+              <CopyButton text={answer} />
             </div>
           </div>
         </div>
@@ -2136,48 +2138,17 @@ function GameScreen({ initialState, onNewGame }) {
       )}
 
       {/* Edelstein draft check modal */}
-      {modal?.isStein && (
-        <div className="modal-overlay" onClick={() => { setModal(null); setSteinDraft(""); setSteinHint(""); }}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-title">💎 Edelstein — Tipp prüfen</div>
-            <div style={{fontSize:13,color:"var(--text-dim)",fontStyle:"italic",marginBottom:10}}>
-              Schreibe deine Antwort. Der Stein prüft sie und gibt einen Hinweis.
-            </div>
-            <div style={{
-              background:"rgba(0,0,0,0.3)",border:"1px solid var(--gold-dim)",
-              borderRadius:2,padding:10,marginBottom:8,fontSize:13,color:"var(--text)"}}>
-              {challenges[chalIdx]?.prompt_de || challenges[chalIdx]?.prompt_en || ""}
-            </div>
-            <textarea
-              className="answer-input"
-              placeholder="Schreibe deine Antwort hier..."
-              value={steinDraft}
-              onChange={e => { setSteinDraft(e.target.value); setSteinHint(""); }}
-              rows={3}
-              style={{marginBottom:8}}
-            />
-            <button className="submit-btn" onClick={handleSteinCheck}
-              disabled={steinLoading || !steinDraft.trim()}
-              style={{marginBottom:8}}>
-              {steinLoading ? "STEIN DENKT..." : "TIPP PRÜFEN · 3 Mana"}
-            </button>
-            {steinHint && (
-              <div style={{background:"rgba(201,148,58,0.08)",border:"1px solid var(--gold-dim)",
-                borderRadius:2,padding:10,fontSize:14,color:"var(--text)",fontStyle:"italic",
-                marginBottom:8}}>
-                {steinHint}
-              </div>
-            )}
-            <button className="modal-close cinzel"
-              onClick={() => { setModal(null); setSteinDraft(""); setSteinHint(""); }}>
-              SCHLIESSEN
-            </button>
-          </div>
-        </div>
-      )}
+      {showSteinModal && <SteinModal
+        challenges={challenges} chalIdx={chalIdx}
+        steinDraft={steinDraft} setSteinDraft={setSteinDraft}
+        steinHint={steinHint} setSteinHint={setSteinHint}
+        steinLoading={steinLoading}
+        onCheck={handleSteinCheck}
+        onClose={() => { setShowSteinModal(false); setSteinDraft(""); setSteinHint(""); }}
+      />}
 
       {/* Modals */}
-      {modal && !modal.isScroll && !modal.isLevel && !modal.isStein && (
+      {modal && !modal.isScroll && !modal.isLevel && (
         <Modal
           title={modal.title}
           content={modal.content}
@@ -2233,6 +2204,71 @@ function GameScreen({ initialState, onNewGame }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ── Copy Button Component ────────────────────────────────────
+// ── Stein Modal Component ─────────────────────────────────────
+function SteinModal({ challenges, chalIdx, steinDraft, setSteinDraft,
+                      steinHint, steinLoading, onCheck, onClose }) {
+  const chal = challenges?.[chalIdx];
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-title">💎 Edelstein — Tipp prüfen</div>
+        <div style={{fontSize:13,color:"var(--text-dim)",fontStyle:"italic",marginBottom:10}}>
+          Schreibe deine Antwort. Der Stein prüft sie und gibt einen Hinweis.
+        </div>
+        {chal && (
+          <div style={{background:"rgba(0,0,0,0.3)",border:"1px solid var(--gold-dim)",
+            borderRadius:2,padding:10,marginBottom:8,fontSize:13,color:"var(--text)"}}>
+            {chal.prompt_de || chal.prompt_en || ""}
+          </div>
+        )}
+        <textarea className="answer-input"
+          placeholder="Schreibe deine Antwort hier..."
+          value={steinDraft}
+          onChange={e => setSteinDraft(e.target.value)}
+          rows={3} style={{marginBottom:8}} autoFocus />
+        <button className="submit-btn" onClick={onCheck}
+          disabled={steinLoading || !steinDraft.trim()} style={{marginBottom:8}}>
+          {steinLoading ? "STEIN DENKT..." : "TIPP PRÜFEN · 3 Mana"}
+        </button>
+        {steinHint && (
+          <div style={{background:"rgba(201,148,58,0.08)",border:"1px solid var(--gold-dim)",
+            borderRadius:2,padding:10,fontSize:14,color:"var(--text)",
+            fontStyle:"italic",marginBottom:8}}>
+            {steinHint}
+          </div>
+        )}
+        <button className="modal-close cinzel" onClick={onClose}>SCHLIESSEN</button>
+      </div>
+    </div>
+  );
+}
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = React.useState(false);
+  function handleCopy() {
+    if (!text?.trim()) return;
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+  return (
+    <button onClick={handleCopy} disabled={!text?.trim()}
+      style={{
+        background: copied ? "var(--green)" : "var(--stone2)",
+        border: `1px solid ${copied ? "var(--green2)" : "var(--border)"}`,
+        borderRadius:2,
+        color: copied ? "var(--white)" : "var(--text-dim)",
+        fontFamily:"Cinzel,serif",fontSize:8,letterSpacing:"0.08em",
+        padding:"0 10px",cursor:"pointer",flexShrink:0,
+        transition:"all 0.2s",whiteSpace:"nowrap",
+      }}>
+      {copied ? "✔ KOPIERT" : "KOPIEREN"}
+    </button>
   );
 }
 
